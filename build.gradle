@@ -1,0 +1,16 @@
+plugins {
+    id 'java'
+}
+
+group 'org.example'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile group: 'org.processing', name: 'core', version: '3.3.7'
+    compile files('lib/grafica.jar')
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}
