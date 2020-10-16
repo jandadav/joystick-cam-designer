@@ -22,7 +22,6 @@ public abstract class Polygon extends PApplet{
         it.translate(position.x, position.y);
         it.rotate(0);
         it.scale(1f, -1f);
-        it.shape(pivot);
     };
 
 }
