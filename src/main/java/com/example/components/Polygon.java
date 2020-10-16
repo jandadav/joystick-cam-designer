@@ -1,4 +1,4 @@
-package com.example;
+package com.example.components;
 
 import processing.core.PApplet;
 import processing.core.PShape;
@@ -21,7 +21,7 @@ public abstract class Polygon extends PApplet{
     public void display() {
         it.translate(position.x, position.y);
         it.rotate(0);
-        it.scale(0.8f, -0.8f);
+        it.scale(1f, -1f);
         it.shape(pivot);
     };
 

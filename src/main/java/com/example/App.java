@@ -1,5 +1,7 @@
 package com.example;
 
+import com.example.components.CoordsPlot;
+import com.example.components.Polygon;
 import processing.core.PApplet;
 
 public class App extends PApplet {
