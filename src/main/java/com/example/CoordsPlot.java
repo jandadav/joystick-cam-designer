@@ -1,10 +1,12 @@
 package com.example;
 
+import lombok.extern.slf4j.Slf4j;
 import processing.core.PApplet;
 import processing.core.PVector;
 
 import java.util.ArrayList;
 
+@Slf4j
 public class CoordsPlot extends Polygon {
 
     public int spacing = 50;
@@ -26,38 +28,37 @@ public class CoordsPlot extends Polygon {
         }
 
         it.stroke(color(255, 255, 0));
-        it.strokeWeight(10);
+        it.strokeWeight(5);
         it.line(0, 0, 0, 500);
         it.line(0, 0, 0, 500);
+
+        ArrayList<PVector> points1 = new ArrayList();
+        ArrayList<PVector> points2 = new ArrayList();
+
 
         PVector vec1 = new PVector(0, 500);
-
-        it.stroke(color(130, 20, 160));
-        ArrayList<PVector> points = new ArrayList();
-
-        for (int i = 0; i <= 6; i++) {
-            points.add(new PVector(vec1.x, vec1.y));
-            if (i > 0) {
-                vec1.rotate(PI/20);
-                it.line(points.get(i).x, points.get(i).y, points.get(i - 1).x, points.get(i - 1).y);
-            }
-        }
-
-        vec1 = new PVector(0, 500);
         PVector vec2 = new PVector(0, 50);
-        it.stroke(color(25, 180, 12));
-        points = new ArrayList();
 
-        Range<Float> range = new Range<>(0.0f, 1.14f, 5);
-        for (int i = 0; i <= range.getSteps(); range.increment()) {
+        int curveSteps = 500;
+        Range<Float> range1 = new Range<>(0.0f, 3.14f, curveSteps);
+        Range<Float> range2 = new Range<>(0.0f, 120f, curveSteps);
 
-            points.add(PVector.add(vec1, vec2));
-            System.out.println(points.get(i));
-            if (i > 0) {
-                vec1.rotate(range.getStep());
-                vec2.rotate(range.getStep());
-                it.line(points.get(i).x, points.get(i).y, points.get(i - 1).x, points.get(i - 1).y);
+        while(range1.hasNext())  {
+            points1.add(new PVector(vec1.x, vec1.y));
+            points2.add(PVector.add(vec1, vec2));
+            //log.info("{} :: {}", points1.get(range1.getIteration()), points2.get(range1.getIteration()));
+            if (range1.getIteration() > 0) {
+                vec1.rotate(range1.getIncrement());
+                vec2.rotate(range2.getIncrement());
+
+                it.stroke(color(130, 20, 160));
+                it.line(points1.get(range1.getIteration()-1).x, points1.get(range1.getIteration()-1).y, points1.get(range1.getIteration()).x, points1.get(range1.getIteration()).y);
+
+                it.stroke(color(25, 180, 12));
+                it.line(points2.get(range1.getIteration()-1).x, points2.get(range1.getIteration()-1).y, points2.get(range1.getIteration()).x, points2.get(range1.getIteration()).y);
             }
+            range1.next();
+            range2.next();
         }
     }
 }
