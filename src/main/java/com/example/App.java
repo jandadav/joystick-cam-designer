@@ -1,33 +1,33 @@
 package com.example;
 
 import processing.core.PApplet;
-import processing.core.PShape;
 
 public class App extends PApplet {
 
-    Polygon polygon;
+    Polygon coords;
+
 
     @Override
     public void settings() {
         super.settings();
         size(900,900, P2D);
         smooth();
+        noLoop();
 
     }
 
     @Override
     public void setup() {
-        polygon = new Polygon(this);
-        polygon.position.x = width / 2;
-        polygon.position.y = height / 2;
-
+        coords = new CoordsPlot(this);
+        coords.position.x = width / 2;
+        coords.position.y = height - 20;
     }
 
     @Override
     public void draw() {
         background(128);
 
-        polygon.display();
+        coords.display();
     }
 
     public static void main(String... args) {
