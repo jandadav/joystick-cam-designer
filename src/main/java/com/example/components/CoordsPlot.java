@@ -18,6 +18,8 @@ public class CoordsPlot extends Polygon {
 
     private PVector center;
     private PVector arm = new PVector(0, 200);
+    private PVector bearing = new PVector(0, 60);
+
     private PFont font = it.createFont("Arial", rescale(20), false);
     private final List<PShape> geometry = computeGeometry();
 
@@ -44,6 +46,10 @@ public class CoordsPlot extends Polygon {
         PVector armTilt = new PVector(arm.x, arm.y).rotate(rotation);
         it.ellipse(armTilt.x, armTilt.y, 120f, 120f);
 
+        PVector bearingTilt = PVector.add(new PVector(bearing.x, bearing.y).rotate(4 * rotation), armTilt);
+        it.line(armTilt.x, armTilt.y, bearingTilt.x, bearingTilt.y);
+
+
         it.shape(geometry.get(0));
         it.shape(geometry.get(1));
 
@@ -68,6 +74,8 @@ public class CoordsPlot extends Polygon {
         it.strokeWeight(rescale(3));
         it.line(springCenterMirror.x, springCenterMirror.y, springCenterWithRotation.x, springCenterWithRotation.y);
         PVector springVector = PVector.sub(springCenterWithRotation, springCenterMirror);
+
+
 
         it.scale(1, -1);
         it.fill(255);
