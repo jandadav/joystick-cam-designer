@@ -2,6 +2,8 @@ package com.example;
 
 import com.example.utils.Range;
 import com.example.utils.Utils;
+import grafica.GPlot;
+import grafica.GPointsArray;
 import lombok.extern.slf4j.Slf4j;
 import processing.core.PApplet;
 import processing.core.PFont;
@@ -105,6 +107,33 @@ public class App extends PApplet {
         fill(255);
         textFont(font);
         text("Rotation: " + Utils.degrees(rotation) + " deg", 20, 40);
+
+        // PLOT
+
+        // Prepare the points for the plot
+        int nPoints = 10;
+        GPointsArray points = new GPointsArray(nPoints);
+
+        for (int i = 0; i < nPoints; i++) {
+            //points.add(i, lerp(0, contactPointLimitAngle, i / Float.valueOf(nPoints)));
+            points.add(i, (i / Float.valueOf(nPoints)) * sqrt(contactPointLimitAngle) * (i / Float.valueOf(nPoints)) * sqrt(contactPointLimitAngle) );
+        }
+
+        // Create a new plot and set its position on the screen
+        GPlot plot = new GPlot(this);
+        plot.setPos(430, 10);
+        plot.setAllFontProperties("Consolas", 0, 12);
+
+        // Set the plot title and the axis labels
+        plot.setTitleText("Contact point rotation curve");
+        plot.getXAxis().setAxisLabelText("Joy arm angle");
+        plot.getYAxis().setAxisLabelText("Contact point angle");
+
+        // Add the points
+        plot.setPoints(points);
+
+        // Draw it!
+        plot.defaultDraw();
 
     }
 
