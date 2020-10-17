@@ -14,6 +14,8 @@ import java.util.List;
 public class CoordsPlot extends Polygon {
 
     private final List<PShape> geometry = computeGeometry();
+    private PVector center;
+    private PVector origin;
 
     public CoordsPlot(PApplet it) {
         super(it);
@@ -73,11 +75,46 @@ public class CoordsPlot extends Polygon {
         _in.endShape();
         _out.endShape();
 
+        // LINE with rotating points
+        it.ellipseMode(CENTER);
+
+        center = new PVector(100, 100);
+        origin = new PVector(200,300);
+
+        PShape line = it.createShape();
+        results.add(line);
+        line.beginShape();
+        line.strokeWeight(3);
+        line.fill(0,0);
+        float angle = 0;
+
+//        for (int i=0; i<=7; i++) {
+//            PVector newPosition = rotateAround(new PVector(300 - i * 50, 300), center, angle);
+//            line.vertex(newPosition.x, newPosition.y);
+//            angle += 0.15f;
+//        }
+
+        for (int i=0; i<=50; i++) {
+            PVector newPosition = rotateAround(origin, center, (2*PI/50) * i);
+            line.vertex(newPosition.x, newPosition.y);
+            angle += 0.15f;
+        }
+
+        line.endShape();
+
         return results;
+    }
+
+    private PVector rotateAround(PVector position, PVector pivot, float angle) {
+        PVector arm = PVector.sub(position, pivot);
+        arm.rotate(angle);
+        return PVector.add(pivot, arm);
     }
 
     private void drawGeometryVertex() {
         this.geometry.forEach(pShape -> it.shape(pShape));
+        it.ellipse(center.x, center.y, 20f, 20f);
+        it.ellipse(origin.x, origin.y, 20f, 20f);
     }
 
     private void drawGrid(int spacing, int size, int weight) {
