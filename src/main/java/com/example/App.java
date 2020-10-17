@@ -15,6 +15,9 @@ public class App extends PApplet {
 
     float joyArmLength = 300f;
     float joyBearingRadius = 50f;
+    float contactPointLimitAngle = 80f;
+    float camLimitAngle = 30f;
+    float joyLimitAngle = 20f;
 
     private PFont font;
     private final PVector camPivot = new PVector(200,200);
@@ -51,16 +54,19 @@ public class App extends PApplet {
         ellipse(0, 0, 20, 20);
 
         // INPUT
-        float rotation = lerp(0, radians(20), mouseX / Float.valueOf(width));
+        float rotation = lerp(0, 1, mouseX / Float.valueOf(width));
+        float camRotation = lerp(0, radians(camLimitAngle), rotation);
+        float contactRotation = lerp(0, radians(contactPointLimitAngle), rotation);
+        float joyRotation = lerp(0, radians(joyLimitAngle), rotation);
 
         // VECTORS
         fill(color(20,50,219));
         PVector joyArm = new PVector(0, joyArmLength);
-        PVector joyArmWithRotation = new PVector(joyArm.x, joyArm.y).rotate(rotation);
+        PVector joyArmWithRotation = new PVector(joyArm.x, joyArm.y).rotate(joyRotation);
         PVector joyBearing = new PVector(0, joyBearingRadius);
-        PVector joyContact = PVector.add(joyArmWithRotation, new PVector(joyBearing.x, joyBearing.y).rotate(4 * rotation));
+        PVector joyContact = PVector.add(joyArmWithRotation, new PVector(joyBearing.x, joyBearing.y).rotate(contactRotation));
         PVector springAnchorFixed = new PVector(-springPivot.x, springPivot.y);
-        PVector springAnchorWithRotation = rotateAround(springPivot, camPivot, -1.5f * rotation);
+        PVector springAnchorWithRotation = rotateAround(springPivot, camPivot, -camRotation);
 
 
         // SHAPES
@@ -80,7 +86,7 @@ public class App extends PApplet {
 
         pushMatrix();
         translate(camPivot.x, camPivot.y);
-        rotate(-(1.5f*rotation));
+        rotate(-camRotation);
         translate(-camPivot.x, -camPivot.y);
         shape(_camCurve);
         popMatrix();
@@ -122,9 +128,9 @@ public class App extends PApplet {
         _camCurve.stroke(color(30, 220, 20));
         _camCurve.strokeWeight(3);
 
-        Range<Float> joyRange = new Range<>(0.0f, radians(20), curveSteps);
-        Range<Float> contactRange = new Range<>(0.0f, radians(80), curveSteps);
-        Range<Float> camRotationRange = new Range<>(0.0f, radians(30), curveSteps);
+        Range<Float> joyRange = new Range<>(0.0f, radians(joyLimitAngle), curveSteps);
+        Range<Float> contactRange = new Range<>(0.0f, radians(contactPointLimitAngle), curveSteps);
+        Range<Float> camRotationRange = new Range<>(0.0f, radians(camLimitAngle), curveSteps);
 
         PVector joyArmSweep = new PVector(joyArm.x, joyArm.y);
         PVector joyBearingSweep = new PVector(joyBearing.x, joyBearing.y);
