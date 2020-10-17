@@ -14,13 +14,12 @@ public class App extends PApplet {
         super.settings();
         size(900,900, P2D);
         smooth();
-        //noLoop();
-
     }
 
     @Override
     public void setup() {
         coords = new CoordsPlot(this);
+        coords.setScale(1);
         coords.position.x = width / 2;
         coords.position.y = height - 20;
     }
@@ -29,7 +28,11 @@ public class App extends PApplet {
     public void draw() {
         background(128);
 
+        pushMatrix();
         coords.display();
+        popMatrix();
+
+        //ellipse(mouseX, mouseY, 30, 30);
     }
 
     public static void main(String... args) {
