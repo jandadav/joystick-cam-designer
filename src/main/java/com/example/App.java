@@ -22,7 +22,7 @@ public class App extends PApplet {
     public void setup() {
         coords = new CoordsPlot(this);
         coords.position.x = width / 2;
-        coords.position.y = height / 2;
+        coords.position.y = height - 20;
     }
 
     @Override

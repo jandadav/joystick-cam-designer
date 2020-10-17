@@ -21,7 +21,7 @@ public abstract class Polygon extends PApplet{
     public void display() {
         it.translate(position.x, position.y);
         it.rotate(0);
-        it.scale(1f, -1f);
+        it.scale(2f, -2f);
     };
 
 }
