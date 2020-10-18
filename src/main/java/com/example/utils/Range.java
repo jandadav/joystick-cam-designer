@@ -31,6 +31,9 @@ public class Range<T extends Number>  {
         value = value + (stop.floatValue() - start.floatValue()) / totalSteps;
     }
 
+    public float getIterationNormalized() {
+        return iteration / Float.valueOf(totalSteps);
+    }
 
     public float getIncrement() {
         return (stop.floatValue() - start.floatValue()) / totalSteps;

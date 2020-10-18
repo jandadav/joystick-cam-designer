@@ -10,6 +10,7 @@ import processing.core.PFont;
 import processing.core.PShape;
 import processing.core.PVector;
 
+import static com.example.utils.Utils.quadratic;
 import static com.example.utils.Utils.rotateAround;
 
 @Slf4j
@@ -49,8 +50,7 @@ public class App extends PApplet {
         GPointsArray points = new GPointsArray(nPoints);
 
         for (int i = 0; i < nPoints; i++) {
-            //points.add(i, lerp(0, contactPointLimitAngle, i / Float.valueOf(nPoints)));
-            points.add(i, (i / Float.valueOf(nPoints)) * sqrt(contactPointLimitAngle) * (i / Float.valueOf(nPoints)) * sqrt(contactPointLimitAngle) );
+            points.add(i, quadratic(20, 50, i / Float.valueOf(nPoints)) );
         }
 
         // Create a new plot and set its position on the screen
@@ -82,7 +82,8 @@ public class App extends PApplet {
 
         // INPUT
         float rotation = lerp(0, 1, mouseX / Float.valueOf(width));
-        float camRotation = lerp(0, radians(camLimitAngle), rotation);
+        //float camRotation = lerp(0, radians(camLimitAngle), rotation);
+        float camRotation = quadratic(0, radians(camLimitAngle), rotation);
         float contactRotation = lerp(0, radians(contactPointLimitAngle), rotation);
         float joyRotation = lerp(0, radians(joyLimitAngle), rotation);
 
@@ -172,7 +173,7 @@ public class App extends PApplet {
             PVector contact = PVector.add(joyArmSweep, joyBearingSweep);
             _contactSweep.vertex(contact.x, contact.y);
 
-            PVector camCurve = rotateAround(contact, camPivot, camRotationRange.getValue());
+            PVector camCurve = rotateAround(contact, camPivot, quadratic(0, radians(camLimitAngle), camRotationRange.getIterationNormalized()));
             _camCurve.vertex(camCurve.x, camCurve.y);
 
             joyArmSweep.rotate(joyRange.getIncrement());

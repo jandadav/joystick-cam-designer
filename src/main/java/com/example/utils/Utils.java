@@ -2,6 +2,7 @@ package com.example.utils;
 
 import processing.core.PVector;
 
+import static java.lang.Math.sqrt;
 import static processing.core.PConstants.PI;
 
 public class Utils {
@@ -17,5 +18,9 @@ public class Utils {
     }
     public static float degrees(float radians) {
         return radians / PI * 180;
+    }
+
+    public static float quadratic(float min, float max, float i) {
+        return (float) (min + (i * sqrt(max-min) * i *  sqrt(max-min)));
     }
 }
