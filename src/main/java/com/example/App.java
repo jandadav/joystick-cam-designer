@@ -10,8 +10,7 @@ import processing.core.PFont;
 import processing.core.PShape;
 import processing.core.PVector;
 
-import static com.example.utils.Utils.quadratic;
-import static com.example.utils.Utils.rotateAround;
+import static com.example.utils.Utils.*;
 
 @Slf4j
 public class App extends PApplet {
@@ -30,6 +29,7 @@ public class App extends PApplet {
     private PShape _contactSweep;
     private PShape _camCurve;
     private GPlot plot;
+    private PVector[] camCurvePoints;
 
 
     @Override
@@ -81,7 +81,8 @@ public class App extends PApplet {
         ellipse(0, 0, 20, 20);
 
         // INPUT
-        float rotation = lerp(0, 1, mouseX / Float.valueOf(width));
+        //float rotation = lerp(0, 1, mouseX / Float.valueOf(width));
+        float rotation = 0;
         //float camRotation = lerp(0, radians(camLimitAngle), rotation);
         float camRotation = quadratic(0, radians(camLimitAngle), rotation);
         float contactRotation = lerp(0, radians(contactPointLimitAngle), rotation);
@@ -117,14 +118,52 @@ public class App extends PApplet {
         rotate(-camRotation);
         translate(-camPivot.x, -camPivot.y);
         shape(_camCurve);
+
+        PVector[] camCurveScreen = pointsToScreenCoords(camCurvePoints, this);
+
         popMatrix();
 
         strokeWeight(3);
         stroke(color(200,0,0));
         line(springAnchorFixed.x, springAnchorFixed.y, springAnchorWithRotation.x, springAnchorWithRotation.y);
 
-        // DEBUG
         popMatrix();
+
+        pushMatrix();
+        translate(mouseX, mouseY);
+
+        // CollisionCircle
+        PVector[] circlePoints = new PVector[12];
+        // CIRCLE
+        PShape circle = createShape();
+        circle.beginShape();
+        circle.fill(0);
+        circle.strokeWeight(1);
+        circle.stroke(255);
+        PVector point = new PVector(0,0);
+        for (int i=0; i <12; i++) {
+            point = new PVector(60, 0).rotate(i * PI / 6);
+            //circle.vertex(point.x, point.y);
+            circlePoints[i] = point;
+        }
+
+        PVector[] circlePointsScreen = pointsToScreenCoords(circlePoints, this);
+        boolean hit = polyPoly(camCurveScreen, circlePointsScreen);
+
+        if (hit) circle.fill(255,150,0);
+        else circle.fill(0,150,255);
+
+        for (int i=0; i <12; i++) {
+            circle.vertex(circlePoints[i].x, circlePoints[i].y);
+        }
+
+        circle.endShape();
+
+        shape(circle);
+
+        popMatrix();
+
+        // DEBUG
 
         fill(0, 200);
         strokeWeight(1);
@@ -136,6 +175,7 @@ public class App extends PApplet {
 
         // PLOT
         plot.defaultDraw();
+
 
     }
 
@@ -166,6 +206,8 @@ public class App extends PApplet {
         PVector joyArmSweep = new PVector(joyArm.x, joyArm.y);
         PVector joyBearingSweep = new PVector(joyBearing.x, joyBearing.y);
 
+        camCurvePoints = new PVector[curveSteps];
+
         while (joyRange.hasNext()) {
 
             _joyArmSweep.vertex(joyArmSweep.x, joyArmSweep.y);
@@ -175,6 +217,8 @@ public class App extends PApplet {
 
             PVector camCurve = rotateAround(contact, camPivot, quadratic(0, radians(camLimitAngle), camRotationRange.getIterationNormalized()));
             _camCurve.vertex(camCurve.x, camCurve.y);
+
+            camCurvePoints[joyRange.getIteration()] = camCurve;
 
             joyArmSweep.rotate(joyRange.getIncrement());
             joyBearingSweep.rotate(contactRange.getIncrement());
