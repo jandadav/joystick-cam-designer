@@ -72,94 +72,89 @@ public class App extends PApplet {
 
         background(100);
         pushMatrix();
-        translate(width/2, height-100);
-        scale(1, -1);
+            translate(width/2, height-100);
+            scale(1, -1);
 
-        // GRID
-        drawGrid(100, 800, 1, 0,300);
-        fill(color(255,0,0));
-        ellipse(0, 0, 20, 20);
+            // GRID
+            drawGrid(100, 800, 1, 0,300);
+            fill(color(255,0,0));
+            ellipse(0, 0, 20, 20);
 
-        // INPUT
-        float rotation = lerp(0, 1, mouseX / Float.valueOf(width));
-        //float rotation = 0;
-        //float camRotation = lerp(0, radians(camLimitAngle), rotation);
-        //float camRotation = quadratic(0, radians(camLimitAngle), rotation);
-        float contactRotation = lerp(0, radians(contactPointLimitAngle), rotation);
-        float joyRotation = lerp(0, radians(joyLimitAngle), rotation);
+            // INPUT
+            float rotation = lerp(0, 1, mouseX / Float.valueOf(width));
+            //float rotation = 0;
+            //float camRotation = lerp(0, radians(camLimitAngle), rotation);
+            //float camRotation = quadratic(0, radians(camLimitAngle), rotation);
+            float contactRotation = lerp(0, radians(contactPointLimitAngle), rotation);
+            float joyRotation = lerp(0, radians(joyLimitAngle), rotation);
 
-        // VECTORS
-        fill(color(20,50,219));
-        PVector joyArm = new PVector(0, joyArmLength);
-        PVector joyArmWithRotation = new PVector(joyArm.x, joyArm.y).rotate(joyRotation);
-        PVector joyBearing = new PVector(0, joyBearingRadius);
-        PVector joyContact = PVector.add(joyArmWithRotation, new PVector(joyBearing.x, joyBearing.y).rotate(contactRotation));
-        PVector springAnchorFixed = new PVector(-springPivot.x, springPivot.y);
-        PVector springAnchorWithRotation = rotateAround(springPivot, camPivot, 0);
-
-
-        // SHAPES
-        calculateShapes(joyArm, joyBearing);
-
-        // RENDER
-        ellipse(camPivot.x, camPivot.y, 20f, 20f);
-        ellipse(springAnchorWithRotation.x, springAnchorWithRotation.y, 20f, 20f);
-        ellipse(springAnchorFixed.x, springAnchorFixed.y, 20f, 20f);
-
-        ellipse(joyArmWithRotation.x, joyArmWithRotation.y, 2 * joyBearingRadius, 2 * joyBearingRadius);
-        line(0,0, joyArmWithRotation.x, joyArmWithRotation.y);
-        line(joyArmWithRotation.x,joyArmWithRotation.y, joyContact.x, joyContact.y);
-
-        // CollisionCircle
-        PVector[] circlePoints = new PVector[24];
-        // CIRCLE
-        PShape circle = createShape();
-        circle.beginShape();
-        circle.fill(0);
-        circle.strokeWeight(1);
-        circle.stroke(255);
-        PVector point = new PVector(0,0);
-        for (int i=0; i <24; i++) {
-            point = PVector.add(joyArmWithRotation, new PVector(joyBearing.x, joyBearing.y).rotate(i * PI / 12));
-            circlePoints[i] = point;
-        }
-        PVector[] circlePointsScreen = pointsToScreenCoords(circlePoints, this);
-        for (int i=0; i <24; i++) {
-            circle.vertex(circlePoints[i].x, circlePoints[i].y);
-        }
-
-        circle.endShape(CLOSE);
-        shape(circle);
-        //shape(_joyArmSweep);
-        //shape(_contactSweep);
-
-        // SIMULATE CAM CURVE ROTATION
-        PVector collision = null;
-
-        pushMatrix();
-        translate(camPivot.x, camPivot.y);
-        rotate(-1f);
-        translate(-camPivot.x, -camPivot.y);
+            // VECTORS
+            fill(color(20,50,219));
+            PVector joyArm = new PVector(0, joyArmLength);
+            PVector joyArmWithRotation = new PVector(joyArm.x, joyArm.y).rotate(joyRotation);
+            PVector joyBearing = new PVector(0, joyBearingRadius);
+            PVector joyContact = PVector.add(joyArmWithRotation, new PVector(joyBearing.x, joyBearing.y).rotate(contactRotation));
+            PVector springAnchorFixed = new PVector(-springPivot.x, springPivot.y);
+            PVector springAnchorWithRotation = rotateAround(springPivot, camPivot, 0);
 
 
-        while (collision == null) {
-            translate(camPivot.x, camPivot.y);
-            rotate(0.01f);
-            translate(-camPivot.x, -camPivot.y);
+            // SHAPES
+            calculateShapes(joyArm, joyBearing);
 
-            PVector[] camCurveScreen = pointsToScreenCoords(camCurvePoints, this);
-            collision = polyPoly(camCurveScreen, circlePointsScreen);
-        }
-        shape(_camCurve);
-        popMatrix();
+            // RENDER
+            ellipse(camPivot.x, camPivot.y, 20f, 20f);
+            ellipse(springAnchorWithRotation.x, springAnchorWithRotation.y, 20f, 20f);
+            ellipse(springAnchorFixed.x, springAnchorFixed.y, 20f, 20f);
+
+            ellipse(joyArmWithRotation.x, joyArmWithRotation.y, 2 * joyBearingRadius, 2 * joyBearingRadius);
+            line(0,0, joyArmWithRotation.x, joyArmWithRotation.y);
+            line(joyArmWithRotation.x,joyArmWithRotation.y, joyContact.x, joyContact.y);
+
+            // COLLISION CIRCLE
+            PVector[] circlePoints = new PVector[24];
+            PShape circle = createShape();
+            circle.beginShape();
+            circle.fill(0);
+            circle.strokeWeight(1);
+            circle.stroke(255);
+            PVector point = new PVector(0,0);
+            for (int i=0; i <24; i++) {
+                point = PVector.add(joyArmWithRotation, new PVector(joyBearing.x, joyBearing.y).rotate(i * PI / 12));
+                circlePoints[i] = point;
+            }
+            PVector[] circlePointsScreen = pointsToScreenCoords(circlePoints, this);
+            for (int i=0; i <24; i++) {
+                circle.vertex(circlePoints[i].x, circlePoints[i].y);
+            }
+
+            circle.endShape(CLOSE);
+            shape(circle);
+            //shape(_joyArmSweep);
+            //shape(_contactSweep);
+
+            // SIMULATE CAM CURVE ROTATION
+            PVector collision = null;
+
+            pushMatrix();
+                translate(camPivot.x, camPivot.y);
+                rotate(-1f);
+                translate(-camPivot.x, -camPivot.y);
 
 
+                while (collision == null) {
+                    translate(camPivot.x, camPivot.y);
+                    rotate(0.01f);
+                    translate(-camPivot.x, -camPivot.y);
 
+                    PVector[] camCurveScreen = pointsToScreenCoords(camCurvePoints, this);
+                    collision = polyPoly(camCurveScreen, circlePointsScreen);
+                }
+                shape(_camCurve);
+            popMatrix();
 
-
-        strokeWeight(3);
-        stroke(color(200,0,0));
-        line(springAnchorFixed.x, springAnchorFixed.y, springAnchorWithRotation.x, springAnchorWithRotation.y);
+            strokeWeight(3);
+            stroke(color(200,0,0));
+            line(springAnchorFixed.x, springAnchorFixed.y, springAnchorWithRotation.x, springAnchorWithRotation.y);
 
         popMatrix();
 
