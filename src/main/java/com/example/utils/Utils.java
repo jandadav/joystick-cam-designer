@@ -3,6 +3,7 @@ package com.example.utils;
 import processing.core.PApplet;
 import processing.core.PVector;
 
+import static java.lang.Math.pow;
 import static java.lang.Math.sqrt;
 import static processing.core.PConstants.PI;
 
@@ -22,7 +23,7 @@ public class Utils {
     }
 
     public static float quadratic(float min, float max, float i) {
-        return (float) (min + (i * sqrt(max-min) * i *  sqrt(max-min)));
+        return (float) (min + pow(i * sqrt(max-min),1.5f));
     }
 
     public static PVector[] pointsToScreenCoords(PVector[] points, PApplet applet) {

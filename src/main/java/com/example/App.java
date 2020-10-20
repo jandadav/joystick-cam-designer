@@ -24,7 +24,7 @@ public class App extends PApplet {
     private PFont font;
     private final PVector camPivot = new PVector(200,200);
     private final PVector springPivot = new PVector(250, 400);
-    private final int curveSteps = 20;
+    private final int curveSteps = 60;
     private PShape _joyArmSweep;
     private PShape _contactSweep;
     private PShape _camCurve;
