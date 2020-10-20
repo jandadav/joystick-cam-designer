@@ -81,10 +81,10 @@ public class App extends PApplet {
         ellipse(0, 0, 20, 20);
 
         // INPUT
-        //float rotation = lerp(0, 1, mouseX / Float.valueOf(width));
-        float rotation = 0;
+        float rotation = lerp(0, 1, mouseX / Float.valueOf(width));
+        //float rotation = 0;
         //float camRotation = lerp(0, radians(camLimitAngle), rotation);
-        float camRotation = quadratic(0, radians(camLimitAngle), rotation);
+        //float camRotation = quadratic(0, radians(camLimitAngle), rotation);
         float contactRotation = lerp(0, radians(contactPointLimitAngle), rotation);
         float joyRotation = lerp(0, radians(joyLimitAngle), rotation);
 
@@ -95,7 +95,7 @@ public class App extends PApplet {
         PVector joyBearing = new PVector(0, joyBearingRadius);
         PVector joyContact = PVector.add(joyArmWithRotation, new PVector(joyBearing.x, joyBearing.y).rotate(contactRotation));
         PVector springAnchorFixed = new PVector(-springPivot.x, springPivot.y);
-        PVector springAnchorWithRotation = rotateAround(springPivot, camPivot, -camRotation);
+        PVector springAnchorWithRotation = rotateAround(springPivot, camPivot, 0);
 
 
         // SHAPES
@@ -110,30 +110,8 @@ public class App extends PApplet {
         line(0,0, joyArmWithRotation.x, joyArmWithRotation.y);
         line(joyArmWithRotation.x,joyArmWithRotation.y, joyContact.x, joyContact.y);
 
-        shape(_joyArmSweep);
-        shape(_contactSweep);
-
-        pushMatrix();
-        translate(camPivot.x, camPivot.y);
-        rotate(-camRotation);
-        translate(-camPivot.x, -camPivot.y);
-        shape(_camCurve);
-
-        PVector[] camCurveScreen = pointsToScreenCoords(camCurvePoints, this);
-
-        popMatrix();
-
-        strokeWeight(3);
-        stroke(color(200,0,0));
-        line(springAnchorFixed.x, springAnchorFixed.y, springAnchorWithRotation.x, springAnchorWithRotation.y);
-
-        popMatrix();
-
-        pushMatrix();
-        translate(mouseX, mouseY);
-
         // CollisionCircle
-        PVector[] circlePoints = new PVector[12];
+        PVector[] circlePoints = new PVector[24];
         // CIRCLE
         PShape circle = createShape();
         circle.beginShape();
@@ -141,25 +119,47 @@ public class App extends PApplet {
         circle.strokeWeight(1);
         circle.stroke(255);
         PVector point = new PVector(0,0);
-        for (int i=0; i <12; i++) {
-            point = new PVector(60, 0).rotate(i * PI / 6);
-            //circle.vertex(point.x, point.y);
+        for (int i=0; i <24; i++) {
+            point = PVector.add(joyArmWithRotation, new PVector(joyBearing.x, joyBearing.y).rotate(i * PI / 12));
             circlePoints[i] = point;
         }
-
         PVector[] circlePointsScreen = pointsToScreenCoords(circlePoints, this);
-        boolean hit = polyPoly(camCurveScreen, circlePointsScreen);
-
-        if (hit) circle.fill(255,150,0);
-        else circle.fill(0,150,255);
-
-        for (int i=0; i <12; i++) {
+        for (int i=0; i <24; i++) {
             circle.vertex(circlePoints[i].x, circlePoints[i].y);
         }
 
-        circle.endShape();
-
+        circle.endShape(CLOSE);
         shape(circle);
+        //shape(_joyArmSweep);
+        //shape(_contactSweep);
+
+        // SIMULATE CAM CURVE ROTATION
+        PVector collision = null;
+
+        pushMatrix();
+        translate(camPivot.x, camPivot.y);
+        rotate(-1f);
+        translate(-camPivot.x, -camPivot.y);
+
+
+        while (collision == null) {
+            translate(camPivot.x, camPivot.y);
+            rotate(0.01f);
+            translate(-camPivot.x, -camPivot.y);
+
+            PVector[] camCurveScreen = pointsToScreenCoords(camCurvePoints, this);
+            collision = polyPoly(camCurveScreen, circlePointsScreen);
+        }
+        shape(_camCurve);
+        popMatrix();
+
+
+
+
+
+        strokeWeight(3);
+        stroke(color(200,0,0));
+        line(springAnchorFixed.x, springAnchorFixed.y, springAnchorWithRotation.x, springAnchorWithRotation.y);
 
         popMatrix();
 
@@ -206,7 +206,7 @@ public class App extends PApplet {
         PVector joyArmSweep = new PVector(joyArm.x, joyArm.y);
         PVector joyBearingSweep = new PVector(joyBearing.x, joyBearing.y);
 
-        camCurvePoints = new PVector[curveSteps];
+        camCurvePoints = new PVector[curveSteps+3];
 
         while (joyRange.hasNext()) {
 
@@ -227,6 +227,14 @@ public class App extends PApplet {
             contactRange.next();
             camRotationRange.next();
         }
+        _camCurve.vertex(-200, 100);
+        _camCurve.vertex(-200, 375);
+        _camCurve.vertex(0, 375);
+
+        camCurvePoints[curveSteps] = new PVector(-200,100);
+        camCurvePoints[curveSteps+1] = new PVector(-200,375);
+        camCurvePoints[curveSteps+2] = new PVector(0,375);
+
         _joyArmSweep.endShape();
         _contactSweep.endShape();
         _camCurve.endShape();
