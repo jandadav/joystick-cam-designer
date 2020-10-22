@@ -5,10 +5,12 @@ import com.example.utils.Utils;
 import grafica.GPlot;
 import grafica.GPointsArray;
 import lombok.extern.slf4j.Slf4j;
-import processing.core.PApplet;
-import processing.core.PFont;
-import processing.core.PShape;
-import processing.core.PVector;
+import processing.awt.PGraphicsJava2D;
+import processing.core.*;
+import processing.opengl.PGraphics2D;
+import processing.opengl.PGraphics3D;
+
+import java.awt.geom.AffineTransform;
 
 import static com.example.utils.Utils.*;
 
@@ -24,7 +26,7 @@ public class App extends PApplet {
     private PFont font;
     private final PVector camPivot = new PVector(200,200);
     private final PVector springPivot = new PVector(250, 400);
-    private final int curveSteps = 60;
+    private final int curveSteps = 80;
     private PShape _joyArmSweep;
     private PShape _contactSweep;
     private PShape _camCurve;
@@ -35,7 +37,7 @@ public class App extends PApplet {
     @Override
     public void settings() {
         super.settings();
-        size(900,900, P2D);
+        size(900,900);
         smooth();
     }
 
@@ -111,19 +113,20 @@ public class App extends PApplet {
             line(joyArmWithRotation.x,joyArmWithRotation.y, joyContact.x, joyContact.y);
 
             // COLLISION CIRCLE
-            PVector[] circlePoints = new PVector[24];
+            int precision = 360;
+            PVector[] circlePoints = new PVector[precision];
             PShape circle = createShape();
             circle.beginShape();
             circle.fill(0);
             circle.strokeWeight(1);
             circle.stroke(255);
             PVector point = new PVector(0,0);
-            for (int i=0; i <24; i++) {
-                point = PVector.add(joyArmWithRotation, new PVector(joyBearing.x, joyBearing.y).rotate(i * PI / 12));
+            for (int i=0; i <precision; i++) {
+                point = PVector.add(joyArmWithRotation, new PVector(joyBearing.x, joyBearing.y).rotate(i * PI / Float.valueOf(precision/2)));
                 circlePoints[i] = point;
             }
             PVector[] circlePointsScreen = pointsToScreenCoords(circlePoints, this);
-            for (int i=0; i <24; i++) {
+            for (int i=0; i <precision; i++) {
                 circle.vertex(circlePoints[i].x, circlePoints[i].y);
             }
 
@@ -143,14 +146,19 @@ public class App extends PApplet {
 
                 while (collision == null) {
                     translate(camPivot.x, camPivot.y);
-                    rotate(0.01f);
+                    rotate(0.001f);
                     translate(-camPivot.x, -camPivot.y);
 
                     PVector[] camCurveScreen = pointsToScreenCoords(camCurvePoints, this);
                     collision = polyPoly(camCurveScreen, circlePointsScreen);
                 }
                 shape(_camCurve);
+
+
             popMatrix();
+
+            PVector transformedVector = applyMatrix(collision, ((PGraphicsJava2D) g).g2.getTransform());
+            ellipse(transformedVector.x, transformedVector.y, 10,10);
 
             strokeWeight(3);
             stroke(color(200,0,0));
@@ -172,6 +180,16 @@ public class App extends PApplet {
         plot.defaultDraw();
 
 
+    }
+
+    private PVector applyMatrix(PVector vector, AffineTransform matrix) {
+        double flatMatrix[]  = new double[6];
+        matrix.getMatrix(flatMatrix);
+
+        float colX = (float)(flatMatrix[0]*vector.x + flatMatrix[2]*vector.y - flatMatrix[4]);
+        float colY = (float)(flatMatrix[1]*vector.x + flatMatrix[3]*vector.y + flatMatrix[5]);
+
+        return new PVector(colX, colY);
     }
 
     private void calculateShapes(PVector joyArm, PVector joyBearing) {
