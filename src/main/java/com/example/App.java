@@ -96,8 +96,6 @@ public class App extends PApplet {
             PVector joyArmWithRotation = new PVector(joyArm.x, joyArm.y).rotate(joyRotation);
             PVector joyBearing = new PVector(0, joyBearingRadius);
             PVector joyContact = PVector.add(joyArmWithRotation, new PVector(joyBearing.x, joyBearing.y).rotate(contactRotation));
-            PVector springAnchorFixed = new PVector(-springPivot.x, springPivot.y);
-            PVector springAnchorWithRotation = rotateAround(springPivot, camPivot, 0);
 
 
             // SHAPES
@@ -105,8 +103,6 @@ public class App extends PApplet {
 
             // RENDER
             ellipse(camPivot.x, camPivot.y, 20f, 20f);
-            ellipse(springAnchorWithRotation.x, springAnchorWithRotation.y, 20f, 20f);
-            ellipse(springAnchorFixed.x, springAnchorFixed.y, 20f, 20f);
 
             ellipse(joyArmWithRotation.x, joyArmWithRotation.y, 2 * joyBearingRadius, 2 * joyBearingRadius);
             line(0,0, joyArmWithRotation.x, joyArmWithRotation.y);
@@ -139,32 +135,52 @@ public class App extends PApplet {
             PVector collision = null;
 
             pushMatrix();
+                float camRotation = 0;
                 translate(camPivot.x, camPivot.y);
                 rotate(-1f);
+                camRotation -=1f;
                 translate(-camPivot.x, -camPivot.y);
 
 
                 while (collision == null) {
                     translate(camPivot.x, camPivot.y);
                     rotate(0.001f);
+                    camRotation += 0.001f;
                     translate(-camPivot.x, -camPivot.y);
 
                     PVector[] camCurveScreen = pointsToScreenCoords(camCurvePoints, this);
                     collision = polyPoly(camCurveScreen, circlePointsScreen);
                 }
                 shape(_camCurve);
-
-
             popMatrix();
 
-            PVector transformedVector = applyMatrix(collision, ((PGraphicsJava2D) g).g2.getTransform());
-            ellipse(transformedVector.x, transformedVector.y, 10,10);
+
+            PVector springAnchorFixed = new PVector(-springPivot.x, springPivot.y);
+            PVector springInitialLength = PVector.sub(springAnchorFixed, springPivot);
+            PVector springAnchorWithRotation = rotateAround(springPivot, camPivot, camRotation);
+
+            ellipse(springAnchorWithRotation.x, springAnchorWithRotation.y, 20f, 20f);
+            ellipse(springAnchorFixed.x, springAnchorFixed.y, 20f, 20f);
+
+            PVector collisionWs = applyMatrix(collision, ((PGraphicsJava2D) g).g2.getTransform());
+            ellipse(collisionWs.x, collisionWs.y, 10,10);
+
+            PVector contactForce = PVector.sub(joyArmWithRotation, collisionWs);
+
+            stroke(255);
+            line(joyArmWithRotation.x, joyArmWithRotation.y, joyArmWithRotation.x+contactForce.x, joyArmWithRotation.y+contactForce.y);
 
             strokeWeight(3);
             stroke(color(200,0,0));
             line(springAnchorFixed.x, springAnchorFixed.y, springAnchorWithRotation.x, springAnchorWithRotation.y);
 
+
         popMatrix();
+
+        // Calculate
+
+        PVector springLength = PVector.sub(springAnchorWithRotation, springAnchorFixed);
+
 
         // DEBUG
 
@@ -175,6 +191,8 @@ public class App extends PApplet {
         fill(255);
         textFont(font);
         text("Rotation: " + Utils.degrees(rotation) + " deg", 20, 40);
+        text("camRotation: " + Utils.degrees(camRotation) + " deg", 20, 60);
+        text("Spring: " + (springLength.mag() - springInitialLength.mag()) + " units", 20, 80);
 
         // PLOT
         plot.defaultDraw();
