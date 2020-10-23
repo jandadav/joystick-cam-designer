@@ -41,8 +41,20 @@ public class App extends PApplet {
         smooth();
     }
 
+
+    /**
+     * This works in setup, the matrix stack populates
+     *
+     * PVector force = new PVector(1,0);
+     *         pushMatrix();
+     *             translate(1f, 1f);
+     *             log.info("[{} : {}] ", screenX(force.x, force.y), screenY(force.x, force.y));
+     *         popMatrix();
+     */
+
     @Override
     public void setup() {
+
         ellipseMode(CENTER);
         font = createFont("Consolas", 20, true);
         plot = new GPlot(this);
@@ -165,21 +177,30 @@ public class App extends PApplet {
             PVector collisionWs = applyMatrix(collision, ((PGraphicsJava2D) g).g2.getTransform());
             ellipse(collisionWs.x, collisionWs.y, 10,10);
 
-            PVector contactForce = PVector.sub(joyArmWithRotation, collisionWs);
+            PVector contactForceDirection = PVector.sub(joyArmWithRotation, collisionWs);
 
             stroke(255);
-            line(joyArmWithRotation.x, joyArmWithRotation.y, joyArmWithRotation.x+contactForce.x, joyArmWithRotation.y+contactForce.y);
+            line(joyArmWithRotation.x, joyArmWithRotation.y, joyArmWithRotation.x+contactForceDirection.x, joyArmWithRotation.y+contactForceDirection.y);
 
             strokeWeight(3);
             stroke(color(200,0,0));
             line(springAnchorFixed.x, springAnchorFixed.y, springAnchorWithRotation.x, springAnchorWithRotation.y);
 
+            // Calculate
+
+            PVector springLength = PVector.sub(springAnchorWithRotation, springAnchorFixed);
+
+            float springMomentum = dot(springLength.copy().setMag((springLength.mag() - springInitialLength.mag()) * 10), springAnchorWithRotation);
+
+            PVector contactArmToCamPivot = PVector.sub(camPivot, collisionWs);
+            float contactForceSize = springMomentum / (sin(PVector.angleBetween(collisionWs, contactArmToCamPivot)) * contactArmToCamPivot.mag());
+            PVector contactForceVector = contactForceDirection.copy().setMag(contactForceSize);
+
+            line(collisionWs.x, collisionWs.y, collisionWs.x +  0.1f * contactForceVector.x, collisionWs.y + 0.1f *contactForceVector.y);
+
+            float joyArmMomentum = dot(contactForceVector, joyArmWithRotation);
 
         popMatrix();
-
-        // Calculate
-
-        PVector springLength = PVector.sub(springAnchorWithRotation, springAnchorFixed);
 
 
         // DEBUG
@@ -193,11 +214,19 @@ public class App extends PApplet {
         text("Rotation: " + Utils.degrees(rotation) + " deg", 20, 40);
         text("camRotation: " + Utils.degrees(camRotation) + " deg", 20, 60);
         text("Spring: " + (springLength.mag() - springInitialLength.mag()) + " units", 20, 80);
+        text("Spring Momentum: " + springMomentum + " N/unit", 20, 100);
+        text("Joy arm momentum: " + joyArmMomentum + " N/unit", 20, 120);
+
+
 
         // PLOT
         plot.defaultDraw();
 
 
+    }
+
+    private float dot(PVector force, PVector arm) {
+        return arm.mag() * force.mag() * sin(PVector.angleBetween(arm, force));
     }
 
     private PVector applyMatrix(PVector vector, AffineTransform matrix) {
