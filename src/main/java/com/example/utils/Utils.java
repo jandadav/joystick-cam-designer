@@ -6,6 +6,7 @@ import processing.core.PVector;
 import static java.lang.Math.pow;
 import static java.lang.Math.sqrt;
 import static processing.core.PConstants.PI;
+import static processing.core.PConstants.TWO_PI;
 
 public class Utils {
 
@@ -143,6 +144,28 @@ public class Utils {
             }
         }
         return collision;
+    }
+
+    public static float moment(PVector force, PVector arm) {
+        return arm.mag() * force.mag() * PApplet.sin(atan2(arm, force));
+    }
+
+
+    // TODO this anti-clockwise direction is probably bogus, look up right hand rule and correct the direction
+
+    /**
+     * Calculates angle between vec1 and vec2, in anti-clockwise direction
+     * The range is 0-2 PI
+     * The order matters
+     *
+     * @param v1
+     * @param v2
+     * @return
+     */
+    public static float atan2(PVector v1, PVector v2) {
+        float a = PApplet.atan2(v2.y, v2.x) - PApplet.atan2(v1.y, v1.x);
+        if (a < 0) a += TWO_PI;
+        return a;
     }
 
 }

@@ -7,8 +7,6 @@ import grafica.GPointsArray;
 import lombok.extern.slf4j.Slf4j;
 import processing.awt.PGraphicsJava2D;
 import processing.core.*;
-import processing.opengl.PGraphics2D;
-import processing.opengl.PGraphics3D;
 
 import java.awt.geom.AffineTransform;
 
@@ -190,7 +188,7 @@ public class App extends PApplet {
 
             PVector springLength = PVector.sub(springAnchorWithRotation, springAnchorFixed);
 
-            float springMomentum = dot(springLength.copy().setMag((springLength.mag() - springInitialLength.mag()) * 10), springAnchorWithRotation);
+            float springMomentum = moment(springLength.copy().setMag((springLength.mag() - springInitialLength.mag()) * 10), springAnchorWithRotation);
 
             PVector contactArmToCamPivot = PVector.sub(camPivot, collisionWs);
             float contactForceSize = springMomentum / (sin(PVector.angleBetween(collisionWs, contactArmToCamPivot)) * contactArmToCamPivot.mag());
@@ -198,7 +196,7 @@ public class App extends PApplet {
 
             line(collisionWs.x, collisionWs.y, collisionWs.x +  0.1f * contactForceVector.x, collisionWs.y + 0.1f *contactForceVector.y);
 
-            float joyArmMomentum = dot(contactForceVector, joyArmWithRotation);
+            float joyArmMomentum = moment(contactForceVector, joyArmWithRotation);
 
         popMatrix();
 
@@ -223,10 +221,6 @@ public class App extends PApplet {
         plot.defaultDraw();
 
 
-    }
-
-    private float dot(PVector force, PVector arm) {
-        return arm.mag() * force.mag() * sin(PVector.angleBetween(arm, force));
     }
 
     private PVector applyMatrix(PVector vector, AffineTransform matrix) {
