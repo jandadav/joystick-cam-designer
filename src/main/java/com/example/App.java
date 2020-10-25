@@ -62,7 +62,6 @@ public class App extends PApplet {
         // GENERAL SETUP
         ellipseMode(CENTER);
         font = createFont("Consolas", 20, true);
-        //preparePlot();
 
         // STATIC SETUP
 
@@ -140,6 +139,20 @@ public class App extends PApplet {
             simRange.next();
         }
 
+        plot = new GPlot(this);
+        int nPoints = 20;
+        GPointsArray points = new GPointsArray(nPoints);
+        for (int i = 0; i < nPoints; i++) {
+            points.add(i, simData.get(i).joyArmMomentum );
+        }
+
+        plot.setPos(430, 10);
+        plot.setAllFontProperties("Consolas", 0, 12);
+        plot.setTitleText("Contact point rotation curve");
+        plot.getXAxis().setAxisLabelText("Joy arm angle");
+        plot.getYAxis().setAxisLabelText("Joy arm moment");
+        plot.setPoints(points);
+
     }
 
     @Override
@@ -200,7 +213,7 @@ public class App extends PApplet {
         popMatrix();
 
 
-        // DEBUG
+        // INFO
 
         fill(0, 200);
         strokeWeight(1);
@@ -218,7 +231,7 @@ public class App extends PApplet {
 
 
         // PLOT
-        //plot.defaultDraw();
+        plot.defaultDraw();
 
 
     }
