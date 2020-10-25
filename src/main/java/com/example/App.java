@@ -143,7 +143,12 @@ public class App extends PApplet {
         int nPoints = 20;
         GPointsArray points = new GPointsArray(nPoints);
         for (int i = 0; i < nPoints; i++) {
-            points.add(i, simData.get(i).joyArmMomentum );
+            points.add(i, simData.get(i).joyArmMomentum /1000000);
+        }
+
+        GPointsArray points2 = new GPointsArray(nPoints);
+        for (int i = 0; i < nPoints; i++) {
+            points.add(i, simData.get(i).camRotation );
         }
 
         plot.setPos(430, 10);
@@ -152,6 +157,7 @@ public class App extends PApplet {
         plot.getXAxis().setAxisLabelText("Joy arm angle");
         plot.getYAxis().setAxisLabelText("Joy arm moment");
         plot.setPoints(points);
+        plot.addLayer("camRotation", points2);
 
     }
 
