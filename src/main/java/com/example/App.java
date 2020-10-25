@@ -1,5 +1,6 @@
 package com.example;
 
+import com.example.components.SimStep;
 import com.example.utils.Range;
 import com.example.utils.Utils;
 import grafica.GPlot;
@@ -9,6 +10,8 @@ import processing.awt.PGraphicsJava2D;
 import processing.core.*;
 
 import java.awt.geom.AffineTransform;
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.example.utils.Utils.*;
 
@@ -30,6 +33,9 @@ public class App extends PApplet {
     private PShape _camCurve;
     private GPlot plot;
     private PVector[] camCurvePoints;
+
+    private List<SimStep> simData = new ArrayList<>();
+    private int actualSimStep = 0;
 
 
     @Override
@@ -53,34 +59,93 @@ public class App extends PApplet {
     @Override
     public void setup() {
 
+        // GENERAL SETUP
         ellipseMode(CENTER);
         font = createFont("Consolas", 20, true);
-        plot = new GPlot(this);
+        //preparePlot();
 
-        // Prepare the points for the plot
-        int nPoints = 10;
-        GPointsArray points = new GPointsArray(nPoints);
+        // STATIC SETUP
 
-        for (int i = 0; i < nPoints; i++) {
-            points.add(i, quadratic(20, 50, i / Float.valueOf(nPoints)) );
+        PVector joyArm = new PVector(0, joyArmLength);
+        PVector joyBearing = new PVector(0, joyBearingRadius);
+
+        calculateShapes(joyArm, joyBearing);
+
+        // SIM
+
+        int simSteps = 20;
+        Range<Float> simRange = new Range<Float>(0f, 1f, simSteps);
+
+        while(simRange.hasNext()) {
+
+            // DATA
+            SimStep s = new SimStep();
+            simData.add(s);
+
+            // INPUT
+            s.joyRotation = lerp(0, radians(joyLimitAngle), simRange.getValue());
+
+
+            // VECTORS
+            s.joyArmWithRotation = new PVector(joyArm.x, joyArm.y).rotate(s.joyRotation);
+
+            // SHAPES
+            // COLLISION CIRCLE
+            int precision = 360;
+            PVector[] circlePoints = new PVector[precision];
+            PVector point = new PVector(0,0);
+            for (int i=0; i <precision; i++) {
+                point = PVector.add(s.joyArmWithRotation, new PVector(joyBearing.x, joyBearing.y).rotate(i * PI / Float.valueOf(precision/2)));
+                circlePoints[i] = point;
+            }
+            PVector[] circlePointsScreen = pointsToScreenCoords(circlePoints, this);
+
+            // COLLISION SIMULATION
+            s.collision = null;
+
+            pushMatrix();
+                s.camRotation = 0;
+                translate(camPivot.x, camPivot.y);
+                rotate(-1f);
+                s.camRotation -=1f;
+                translate(-camPivot.x, -camPivot.y);
+
+
+                while (s.collision == null) {
+                    translate(camPivot.x, camPivot.y);
+                    rotate(0.001f);
+                    s.camRotation += 0.001f;
+                    translate(-camPivot.x, -camPivot.y);
+
+                    PVector[] camCurveScreen = pointsToScreenCoords(camCurvePoints, this);
+                    s.collision = polyPoly(camCurveScreen, circlePointsScreen);
+                }
+            popMatrix();
+
+            // CALCULATE
+
+            s.springAnchorFixed = new PVector(-springPivot.x, springPivot.y);
+            s.springInitialLength = PVector.sub(s.springAnchorFixed, springPivot);
+            s.springAnchorWithRotation = rotateAround(springPivot, camPivot, s.camRotation);
+            s.collisionWs = applyMatrix(s.collision, ((PGraphicsJava2D) g).g2.getTransform());
+            s.contactForceDirection = PVector.sub(s.joyArmWithRotation, s.collisionWs);
+            s.springLength = PVector.sub(s.springAnchorWithRotation, s.springAnchorFixed);
+            // TODO replace with spring toughness scalar
+            s.springMomentum = moment(s.springLength.copy().setMag((s.springLength.mag() - s.springInitialLength.mag()) * 10), s.springAnchorWithRotation);
+            s.contactArmToCamPivot = PVector.sub(camPivot, s.collisionWs);
+            s.contactForceSize = s.springMomentum / (sin(PVector.angleBetween(s.collisionWs, s.contactArmToCamPivot)) * s.contactArmToCamPivot.mag());
+            s.contactForceVector = s.contactForceDirection.copy().setMag(s.contactForceSize);
+            s.joyArmMomentum = moment(s.contactForceVector, s.joyArmWithRotation);
+
+            simRange.next();
         }
-
-        // Create a new plot and set its position on the screen
-        plot.setPos(430, 10);
-        plot.setAllFontProperties("Consolas", 0, 12);
-
-        // Set the plot title and the axis labels
-        plot.setTitleText("Contact point rotation curve");
-        plot.getXAxis().setAxisLabelText("Joy arm angle");
-        plot.getYAxis().setAxisLabelText("Contact point angle");
-
-        // Add the points
-        plot.setPoints(points);
 
     }
 
     @Override
     public void draw() {
+
+        SimStep s = simData.get(actualSimStep);
 
         background(100);
         pushMatrix();
@@ -92,111 +157,45 @@ public class App extends PApplet {
             fill(color(255,0,0));
             ellipse(0, 0, 20, 20);
 
-            // INPUT
-            float rotation = lerp(0, 1, mouseX / Float.valueOf(width));
-            //float rotation = 0;
-            //float camRotation = lerp(0, radians(camLimitAngle), rotation);
-            //float camRotation = quadratic(0, radians(camLimitAngle), rotation);
-            float contactRotation = lerp(0, radians(contactPointLimitAngle), rotation);
-            float joyRotation = lerp(0, radians(joyLimitAngle), rotation);
 
             // VECTORS
             fill(color(20,50,219));
-            PVector joyArm = new PVector(0, joyArmLength);
-            PVector joyArmWithRotation = new PVector(joyArm.x, joyArm.y).rotate(joyRotation);
-            PVector joyBearing = new PVector(0, joyBearingRadius);
-            PVector joyContact = PVector.add(joyArmWithRotation, new PVector(joyBearing.x, joyBearing.y).rotate(contactRotation));
-
 
             // SHAPES
-            calculateShapes(joyArm, joyBearing);
 
             // RENDER
             ellipse(camPivot.x, camPivot.y, 20f, 20f);
 
-            ellipse(joyArmWithRotation.x, joyArmWithRotation.y, 2 * joyBearingRadius, 2 * joyBearingRadius);
-            line(0,0, joyArmWithRotation.x, joyArmWithRotation.y);
-            line(joyArmWithRotation.x,joyArmWithRotation.y, joyContact.x, joyContact.y);
+            ellipse(s.joyArmWithRotation.x, s.joyArmWithRotation.y, 2 * joyBearingRadius, 2 * joyBearingRadius);
+            line(0,0, s.joyArmWithRotation.x, s.joyArmWithRotation.y);
+            //line(s.joyArmWithRotation.x,s.joyArmWithRotation.y, s.joyContact.x, s.joyContact.y);
 
-            // COLLISION CIRCLE
-            int precision = 360;
-            PVector[] circlePoints = new PVector[precision];
-            PShape circle = createShape();
-            circle.beginShape();
-            circle.fill(0);
-            circle.strokeWeight(1);
-            circle.stroke(255);
-            PVector point = new PVector(0,0);
-            for (int i=0; i <precision; i++) {
-                point = PVector.add(joyArmWithRotation, new PVector(joyBearing.x, joyBearing.y).rotate(i * PI / Float.valueOf(precision/2)));
-                circlePoints[i] = point;
-            }
-            PVector[] circlePointsScreen = pointsToScreenCoords(circlePoints, this);
-            for (int i=0; i <precision; i++) {
-                circle.vertex(circlePoints[i].x, circlePoints[i].y);
-            }
-
-            circle.endShape(CLOSE);
-            shape(circle);
-            //shape(_joyArmSweep);
-            //shape(_contactSweep);
-
-            // SIMULATE CAM CURVE ROTATION
-            PVector collision = null;
 
             pushMatrix();
-                float camRotation = 0;
                 translate(camPivot.x, camPivot.y);
-                rotate(-1f);
-                camRotation -=1f;
+                rotate(s.camRotation);
                 translate(-camPivot.x, -camPivot.y);
-
-
-                while (collision == null) {
-                    translate(camPivot.x, camPivot.y);
-                    rotate(0.001f);
-                    camRotation += 0.001f;
-                    translate(-camPivot.x, -camPivot.y);
-
-                    PVector[] camCurveScreen = pointsToScreenCoords(camCurvePoints, this);
-                    collision = polyPoly(camCurveScreen, circlePointsScreen);
-                }
                 shape(_camCurve);
             popMatrix();
 
 
-            PVector springAnchorFixed = new PVector(-springPivot.x, springPivot.y);
-            PVector springInitialLength = PVector.sub(springAnchorFixed, springPivot);
-            PVector springAnchorWithRotation = rotateAround(springPivot, camPivot, camRotation);
 
-            ellipse(springAnchorWithRotation.x, springAnchorWithRotation.y, 20f, 20f);
-            ellipse(springAnchorFixed.x, springAnchorFixed.y, 20f, 20f);
+            ellipse(s.springAnchorWithRotation.x, s.springAnchorWithRotation.y, 20f, 20f);
+            ellipse(s.springAnchorFixed.x, s.springAnchorFixed.y, 20f, 20f);
 
-            PVector collisionWs = applyMatrix(collision, ((PGraphicsJava2D) g).g2.getTransform());
-            ellipse(collisionWs.x, collisionWs.y, 10,10);
+            ellipse(s.collisionWs.x, s.collisionWs.y, 10,10);
 
-            PVector contactForceDirection = PVector.sub(joyArmWithRotation, collisionWs);
+            PVector contactForceDirection = PVector.sub(s.joyArmWithRotation, s.collisionWs);
 
             stroke(255);
-            line(joyArmWithRotation.x, joyArmWithRotation.y, joyArmWithRotation.x+contactForceDirection.x, joyArmWithRotation.y+contactForceDirection.y);
+            line(s.joyArmWithRotation.x, s.joyArmWithRotation.y, s.joyArmWithRotation.x+contactForceDirection.x, s.joyArmWithRotation.y+contactForceDirection.y);
 
             strokeWeight(3);
             stroke(color(200,0,0));
-            line(springAnchorFixed.x, springAnchorFixed.y, springAnchorWithRotation.x, springAnchorWithRotation.y);
+            line(s.springAnchorFixed.x, s.springAnchorFixed.y, s.springAnchorWithRotation.x, s.springAnchorWithRotation.y);
 
-            // Calculate
+            line(s.collisionWs.x, s.collisionWs.y, s.collisionWs.x +  0.1f * s.contactForceVector.x, s.collisionWs.y + 0.1f * s.contactForceVector.y);
 
-            PVector springLength = PVector.sub(springAnchorWithRotation, springAnchorFixed);
-
-            float springMomentum = moment(springLength.copy().setMag((springLength.mag() - springInitialLength.mag()) * 10), springAnchorWithRotation);
-
-            PVector contactArmToCamPivot = PVector.sub(camPivot, collisionWs);
-            float contactForceSize = springMomentum / (sin(PVector.angleBetween(collisionWs, contactArmToCamPivot)) * contactArmToCamPivot.mag());
-            PVector contactForceVector = contactForceDirection.copy().setMag(contactForceSize);
-
-            line(collisionWs.x, collisionWs.y, collisionWs.x +  0.1f * contactForceVector.x, collisionWs.y + 0.1f *contactForceVector.y);
-
-            float joyArmMomentum = moment(contactForceVector, joyArmWithRotation);
 
         popMatrix();
 
@@ -209,18 +208,34 @@ public class App extends PApplet {
         rect(10, 10, 400, 300);
         fill(255);
         textFont(font);
-        text("Rotation: " + Utils.degrees(rotation) + " deg", 20, 40);
-        text("camRotation: " + Utils.degrees(camRotation) + " deg", 20, 60);
-        text("Spring: " + (springLength.mag() - springInitialLength.mag()) + " units", 20, 80);
-        text("Spring Momentum: " + springMomentum + " N/unit", 20, 100);
-        text("Joy arm momentum: " + joyArmMomentum + " N/unit", 20, 120);
+        text("joyRotation: " + Utils.degrees(s.joyRotation) + " deg", 20, 40);
+        text("camRotation: " + Utils.degrees(s.camRotation) + " deg", 20, 60);
+        text("Spring: " + (s.springLength.mag() - s.springInitialLength.mag()) + " units", 20, 80);
+        text("Spring Momentum: " + s.springMomentum + " N/unit", 20, 100);
+        text("Joy arm momentum: " + s.joyArmMomentum + " N/unit", 20, 120);
+        text("SimStep: " + actualSimStep, 20, 140);
 
 
 
         // PLOT
-        plot.defaultDraw();
+        //plot.defaultDraw();
 
 
+    }
+
+    @Override
+    public void keyPressed() {
+        if (key == CODED) {
+            if (keyCode == LEFT) {
+                if(actualSimStep>0) {
+                    actualSimStep--;
+                }
+            } else if (keyCode == RIGHT) {
+                if(actualSimStep<19){
+                    actualSimStep++;
+                }
+            }
+        }
     }
 
     private PVector applyMatrix(PVector vector, AffineTransform matrix) {
@@ -311,5 +326,29 @@ public class App extends PApplet {
         for (int i = ((-(size / 2) + yOffset) / spacing); i < (((size / 2) + yOffset) / spacing)+1; i++) {
             line(-size / 2 + xOffset, spacing * i, size / 2 + xOffset, spacing * i);
         }
+    }
+
+    private void preparePlot() {
+        plot = new GPlot(this);
+
+        // Prepare the points for the plot
+        int nPoints = 10;
+        GPointsArray points = new GPointsArray(nPoints);
+
+        for (int i = 0; i < nPoints; i++) {
+            points.add(i, quadratic(20, 50, i / Float.valueOf(nPoints)) );
+        }
+
+        // Create a new plot and set its position on the screen
+        plot.setPos(430, 10);
+        plot.setAllFontProperties("Consolas", 0, 12);
+
+        // Set the plot title and the axis labels
+        plot.setTitleText("Contact point rotation curve");
+        plot.getXAxis().setAxisLabelText("Joy arm angle");
+        plot.getYAxis().setAxisLabelText("Contact point angle");
+
+        // Add the points
+        plot.setPoints(points);
     }
 }
