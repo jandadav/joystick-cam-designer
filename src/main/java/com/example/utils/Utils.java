@@ -1,5 +1,6 @@
 package com.example.utils;
 
+import com.example.App;
 import processing.core.PApplet;
 import processing.core.PVector;
 
@@ -151,8 +152,6 @@ public class Utils {
     }
 
 
-    // TODO this anti-clockwise direction is probably bogus, look up right hand rule and correct the direction
-
     /**
      * Calculates angle between vec1 and vec2, in anti-clockwise direction
      * The range is 0-2 PI
@@ -166,6 +165,10 @@ public class Utils {
         float a = PApplet.atan2(v2.y, v2.x) - PApplet.atan2(v1.y, v1.x);
         if (a < 0) a += TWO_PI;
         return a;
+    }
+
+    public static float pixels(float metricValue) {
+        return metricValue * App.dpi;
     }
 
 }
