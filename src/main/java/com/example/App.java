@@ -31,7 +31,8 @@ public class App extends PApplet {
     private PShape _joyArmSweep;
     private PShape _contactSweep;
     private PShape _camCurve;
-    private GPlot plot;
+    private GPlot plot1;
+    private GPlot plot2;
     private PVector[] camCurvePoints;
 
     private List<SimStep> simData = new ArrayList<>();
@@ -139,25 +140,36 @@ public class App extends PApplet {
             simRange.next();
         }
 
-        plot = new GPlot(this);
+        // PLOTS
+        plot1 = new GPlot(this);
+        plot2 = new GPlot(this);
         int nPoints = 20;
         GPointsArray points = new GPointsArray(nPoints);
         for (int i = 0; i < nPoints; i++) {
-            points.add(i, simData.get(i).joyArmMomentum /1000000);
+            points.add(i, simData.get(i).joyArmMomentum );
         }
 
         GPointsArray points2 = new GPointsArray(nPoints);
         for (int i = 0; i < nPoints; i++) {
-            points.add(i, simData.get(i).camRotation );
+            points2.add(i, degrees(simData.get(i).camRotation) );
         }
 
-        plot.setPos(430, 10);
-        plot.setAllFontProperties("Consolas", 0, 12);
-        plot.setTitleText("Contact point rotation curve");
-        plot.getXAxis().setAxisLabelText("Joy arm angle");
-        plot.getYAxis().setAxisLabelText("Joy arm moment");
-        plot.setPoints(points);
-        plot.addLayer("camRotation", points2);
+        plot1.setPos(430, 10);
+        plot1.setAllFontProperties("Consolas", 0, 12);
+        plot1.setTitleText("Contact point rotation curve");
+        plot1.getXAxis().setAxisLabelText("Joy arm angle");
+        plot1.getYAxis().setAxisLabelText("Joy arm moment");
+        plot1.getMainLayer().setLineColor(color(0,128,0));
+        plot1.getMainLayer().setPointColor(color(0,128,0));
+        plot1.setPoints(points);
+
+        plot2.setPos(430, 10);
+        plot2.setAllFontProperties("Consolas", 0, 12);
+        plot2.setTitleText("Contact point rotation curve");
+        plot2.getXAxis().setAxisLabelText("Joy arm angle");
+        plot2.getRightAxis().setAxisLabelText("Cam rotation");
+        plot2.getRightAxis().setDrawTickLabels(true);
+        plot2.setPoints(points2);
 
     }
 
@@ -169,7 +181,7 @@ public class App extends PApplet {
         background(100);
         pushMatrix();
             translate(width/2, height-100);
-            scale(1, -1);
+            scale(0.5f, -0.5f);
 
             // GRID
             drawGrid(100, 800, 1, 0,300);
@@ -237,8 +249,20 @@ public class App extends PApplet {
 
 
         // PLOT
-        plot.defaultDraw();
+        plot1.beginDraw();
+        plot1.drawBox();
+        plot1.drawXAxis();
+        plot1.drawYAxis();
+        plot1.drawTitle();
+        plot1.drawPoints();
+        plot1.drawLines();
+        plot1.endDraw();
 
+        plot2.beginDraw();
+        plot2.drawRightAxis();
+        plot2.drawPoints();
+        plot2.drawLines();
+        plot2.endDraw();
 
     }
 
@@ -348,7 +372,7 @@ public class App extends PApplet {
     }
 
     private void preparePlot() {
-        plot = new GPlot(this);
+        plot1 = new GPlot(this);
 
         // Prepare the points for the plot
         int nPoints = 10;
@@ -359,15 +383,15 @@ public class App extends PApplet {
         }
 
         // Create a new plot and set its position on the screen
-        plot.setPos(430, 10);
-        plot.setAllFontProperties("Consolas", 0, 12);
+        plot1.setPos(430, 10);
+        plot1.setAllFontProperties("Consolas", 0, 12);
 
         // Set the plot title and the axis labels
-        plot.setTitleText("Contact point rotation curve");
-        plot.getXAxis().setAxisLabelText("Joy arm angle");
-        plot.getYAxis().setAxisLabelText("Contact point angle");
+        plot1.setTitleText("Contact point rotation curve");
+        plot1.getXAxis().setAxisLabelText("Joy arm angle");
+        plot1.getYAxis().setAxisLabelText("Contact point angle");
 
         // Add the points
-        plot.setPoints(points);
+        plot1.setPoints(points);
     }
 }
