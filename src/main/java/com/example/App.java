@@ -29,6 +29,7 @@ public class App extends PApplet {
     private PFont font;
     private final PVector camPivot = new PVector(0.02f,0.02f);
     private final PVector springPivot = new PVector(0.025f, 0.04f);
+    private PVector springL0;
     private final int curveSteps = 80;
     private PShape _joyArmSweep;
     private PShape _contactSweep;
@@ -64,7 +65,7 @@ public class App extends PApplet {
 
         // GENERAL SETUP
         ellipseMode(CENTER);
-        font = createFont("Consolas", 20, true);
+        font = createFont("Consolas", 14, true);
 
         // STATIC SETUP
 
@@ -127,6 +128,7 @@ public class App extends PApplet {
             // CALCULATE
 
             s.springAnchorFixed = new PVector(-springPivot.x, springPivot.y);
+            springL0 = PVector.sub(s.springAnchorFixed, springPivot);
             s.springInitialLength = PVector.sub(s.springAnchorFixed, springPivot);
             s.springAnchorWithRotation = rotateAround(springPivot, camPivot, s.camRotation);
             s.collisionWs = applyMatrix(s.collision, ((PGraphicsJava2D) g).g2.getTransform());
@@ -241,17 +243,24 @@ public class App extends PApplet {
         rect(10, 10, 400, 300);
         fill(255);
         textFont(font);
-        text("joyRotation: " + Utils.degrees(s.joyRotation) + " deg", 20, 40);
-        text("camRotation: " + Utils.degrees(s.camRotation) + " deg", 20, 60);
-        text("Spring: " + (s.springLength.mag() - s.springInitialLength.mag()) + " units", 20, 80);
-        text("Spring Momentum: " + s.springMomentum + " N/unit", 20, 100);
-        text("Joy arm momentum: " + s.joyArmMomentum + " N/unit", 20, 120);
-        text("SimStep: " + actualSimStep, 20, 140);
+
+        int offset = 25;
+        int spacing = 15;
+        text("joyRotation: " + String.format("%f",Utils.degrees(s.joyRotation)) + " deg", 20, offset);
+        text("camRotation: " + String.format("%f", Utils.degrees(s.camRotation)) + " deg", 20, offset+=spacing);
+        text("Spring Momentum: " + String.format("%f",s.springMomentum) + " N/m", 20, offset+=spacing);
+        text("Joy arm momentum: " + String.format("%f", s.joyArmMomentum) + " N/m", 20, offset+=spacing);
+        text("SimStep: " + actualSimStep, 20, offset+=spacing);
+        text("Spring L0: " + String.format("%f",springL0.mag()), 20, offset+=spacing);
+        text("Spring Lmax: " + String.format("%f", simData.get(simData.size()-1).springLength.mag()) , 20, offset+=spacing);
+        text("Spring deltaL max: " + String.format("%f", (simData.get(simData.size()-1).springLength.mag() - springL0.mag())), 20, offset+=spacing);
+        text("Spring deltaL: " + String.format("%f", (s.springLength.mag() - s.springInitialLength.mag())) + " units", 20, offset+=spacing);
 
 
 
         // PLOT
         plot1.beginDraw();
+        plot1.drawBackground();
         plot1.drawBox();
         plot1.drawXAxis();
         plot1.drawYAxis();
@@ -264,6 +273,7 @@ public class App extends PApplet {
         plot2.drawRightAxis();
         plot2.drawPoints();
         plot2.drawLines();
+        plot2.drawVerticalLine(actualSimStep);
         plot2.endDraw();
 
     }
@@ -271,11 +281,11 @@ public class App extends PApplet {
     @Override
     public void keyPressed() {
         if (key == CODED) {
-            if (keyCode == LEFT) {
+            if (keyCode == RIGHT) {
                 if(actualSimStep>0) {
                     actualSimStep--;
                 }
-            } else if (keyCode == RIGHT) {
+            } else if (keyCode == LEFT) {
                 if(actualSimStep<19){
                     actualSimStep++;
                 }
