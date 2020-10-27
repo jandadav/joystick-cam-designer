@@ -134,9 +134,15 @@ public class App extends PApplet {
             s.springAnchorWithRotation = rotateAround(springPivot, camPivot, s.camRotation);
             s.collisionWs = applyMatrix(s.collision, ((PGraphicsJava2D) g).g2.getTransform());
             s.contactForceDirection = PVector.sub(s.joyArmWithRotation, s.collisionWs);
-            s.springLength = PVector.sub(s.springAnchorWithRotation, s.springAnchorFixed);
-            // TODO replace with spring toughness scalar
-            s.springMomentum = moment(s.springLength.copy().setMag((s.springLength.mag() - s.springInitialLength.mag()) * 10), s.springAnchorWithRotation);
+            s.springLength = PVector.sub(s.springAnchorFixed, s.springAnchorWithRotation);
+
+            float f0 = 1.86f;
+            float f8 = 19f;
+            float l0 = 0.04f;
+            float l8 = 0.1324f;
+            s.springForce = s.springLength.copy().setMag(springForceLerp(f0, f8, l0, l8, s.springLength.mag()));
+
+            s.springMomentum = moment(s.springForce, s.springAnchorWithRotation);
             s.contactArmToCamPivot = PVector.sub(camPivot, s.collisionWs);
             s.contactForceSize = s.springMomentum / (sin(PVector.angleBetween(s.collisionWs, s.contactArmToCamPivot)) * s.contactArmToCamPivot.mag());
             s.contactForceVector = s.contactForceDirection.copy().setMag(s.contactForceSize);
@@ -231,7 +237,12 @@ public class App extends PApplet {
             stroke(color(200,0,0));
             line(pixels(s.springAnchorFixed.x), pixels(s.springAnchorFixed.y), pixels( s.springAnchorWithRotation.x), pixels(s.springAnchorWithRotation.y));
 
-            line(pixels(s.collisionWs.x), pixels(s.collisionWs.y), pixels(s.collisionWs.x +  0.1f * s.contactForceVector.x), pixels(s.collisionWs.y + 0.1f * s.contactForceVector.y));
+            // FORCES
+            strokeWeight(6);
+            stroke(color(255, 111, 0));
+            float forceDrawScale = 0.001f;
+            line(pixels(s.springAnchorWithRotation.x), pixels(s.springAnchorWithRotation.y), pixels(s.springAnchorWithRotation.x +  forceDrawScale * s.springForce.x), pixels(s.springAnchorWithRotation.y + forceDrawScale * s.springForce.y));
+            line(pixels(s.collisionWs.x), pixels(s.collisionWs.y), pixels(s.collisionWs.x +  forceDrawScale * s.contactForceVector.x), pixels(s.collisionWs.y + forceDrawScale * s.contactForceVector.y));
 
 
         popMatrix();
@@ -256,7 +267,8 @@ public class App extends PApplet {
         text("Spring L0: " + String.format("%f",springL0.mag()), 20, offset+=spacing);
         text("Spring Lmax: " + String.format("%f", simData.get(simData.size()-1).springLength.mag()) , 20, offset+=spacing);
         text("Spring deltaL max: " + String.format("%f", (simData.get(simData.size()-1).springLength.mag() - springL0.mag())), 20, offset+=spacing);
-        text("Spring deltaL: " + String.format("%f", (s.springLength.mag() - s.springInitialLength.mag())) + " units", 20, offset+=spacing);
+        text("Spring deltaL: " + String.format("%f", (s.springLength.mag() - s.springInitialLength.mag())) + " m", 20, offset+=spacing);
+        text("Spring force: " + String.format("%f", s.springForce.mag()) + " N", 20, offset+=spacing);
 
 
 

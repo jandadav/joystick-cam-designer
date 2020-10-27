@@ -1,6 +1,5 @@
 package com.example.components;
 
-import lombok.Data;
 import processing.core.PVector;
 
 public class SimStep {
@@ -11,6 +10,7 @@ public class SimStep {
     public float springMomentum;
     public float contactForceSize;
     public float joyArmMomentum;
+    public PVector springForce;
 
     public PVector joyArmWithRotation;
     public PVector collision;

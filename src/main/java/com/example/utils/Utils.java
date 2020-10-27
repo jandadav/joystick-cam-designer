@@ -171,4 +171,7 @@ public class Utils {
         return metricValue * App.dpi;
     }
 
+    public static float springForceLerp(float f0, float f8, float l0, float l8, float springLength) {
+        return f0 + (((f8-f0) / (l8-l0)) * (springLength - l0));
+    }
 }
