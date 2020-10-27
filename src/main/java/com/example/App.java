@@ -20,7 +20,7 @@ public class App extends PApplet {
 
 
     public static float dpi = 10000;
-    float joyArmLength = 0.03f;
+    float joyArmLength = 0.04f;
     float joyBearingRadius = 0.005f;
     float contactPointLimitAngle = 80f;
     float camLimitAngle = 30f;
@@ -351,13 +351,14 @@ public class App extends PApplet {
             contactRange.next();
             camRotationRange.next();
         }
-        _camCurve.vertex(-200, 100);
-        _camCurve.vertex(-200, 375);
-        _camCurve.vertex(0, 375);
+        float offset = 0.002f;
+        _camCurve.vertex(pixels(camCurvePoints[curveSteps-1].x-offset), pixels(camCurvePoints[curveSteps-1].y) );
+        _camCurve.vertex(pixels(camCurvePoints[curveSteps-1].x-offset), pixels(camCurvePoints[0].y+offset));
+        _camCurve.vertex(pixels(camCurvePoints[0].x), pixels(camCurvePoints[0].y+offset));
 
-        camCurvePoints[curveSteps] = new PVector(-200/dpi, 100/dpi);
-        camCurvePoints[curveSteps+1] = new PVector(-200/dpi, 375/dpi);
-        camCurvePoints[curveSteps+2] = new PVector(0, 375/dpi);
+        camCurvePoints[curveSteps] = new PVector(camCurvePoints[curveSteps-1].x-offset, camCurvePoints[curveSteps-1].y);
+        camCurvePoints[curveSteps+1] = new PVector(camCurvePoints[curveSteps-1].x-offset, camCurvePoints[0].y+offset);
+        camCurvePoints[curveSteps+2] = new PVector(camCurvePoints[0].x, camCurvePoints[0].y+offset);
 
         _joyArmSweep.endShape();
         _contactSweep.endShape();
