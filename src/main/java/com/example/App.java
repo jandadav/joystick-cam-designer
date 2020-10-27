@@ -22,9 +22,10 @@ public class App extends PApplet {
     public static float dpi = 10000;
     float joyArmLength = 0.04f;
     float joyBearingRadius = 0.005f;
-    float contactPointLimitAngle = 80f;
+    float contactPointLimitAngle = 40f;
     float camLimitAngle = 30f;
     float joyLimitAngle = 20f;
+    float joyLimitAngleExtension = 3f;
 
     private PFont font;
     private final PVector camPivot = new PVector(0.02f,0.02f);
@@ -213,7 +214,8 @@ public class App extends PApplet {
                 shape(_camCurve);
             popMatrix();
 
-
+            shape(_joyArmSweep);
+            shape(_contactSweep);
 
             ellipse(pixels(s.springAnchorWithRotation.x), pixels(s.springAnchorWithRotation.y), 20f, 20f);
             ellipse(pixels(s.springAnchorFixed.x), pixels(s.springAnchorFixed.y), 20f, 20f);
@@ -309,21 +311,21 @@ public class App extends PApplet {
         _camCurve = createShape();
 
         _joyArmSweep.beginShape();
-        _joyArmSweep.fill(0, 0);
         _joyArmSweep.stroke(color(255, 255, 0));
         _joyArmSweep.strokeWeight(3);
+        _joyArmSweep.fill(0, 1);
 
         _contactSweep.beginShape();
-        _contactSweep.fill(0, 0);
         _contactSweep.stroke(color(128, 90, 200));
         _contactSweep.strokeWeight(3);
+        _contactSweep.fill(0, 1);
 
         _camCurve.beginShape();
-        _camCurve.fill(0, 0);
         _camCurve.stroke(color(30, 220, 20));
         _camCurve.strokeWeight(3);
+        _camCurve.fill(0, 128);
 
-        Range<Float> joyRange = new Range<>(0.0f, radians(joyLimitAngle), curveSteps);
+        Range<Float> joyRange = new Range<>(0.0f, radians(joyLimitAngle + joyLimitAngleExtension), curveSteps);
         Range<Float> contactRange = new Range<>(0.0f, radians(contactPointLimitAngle), curveSteps);
         Range<Float> camRotationRange = new Range<>(0.0f, radians(camLimitAngle), curveSteps);
 
