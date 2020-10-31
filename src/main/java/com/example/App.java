@@ -48,7 +48,7 @@ public class App extends PApplet {
 
     private List<SimStep> simData = new ArrayList<>();
     private int actualSimStep = 0;
-    private int simSteps = 31;
+    private int simSteps = 61;
     private boolean isSimulateOn = true;
 
 
@@ -448,12 +448,12 @@ public class App extends PApplet {
             camPointsRight.add(newPosition);
             lastGeneratedPoint = newPosition;
 
-            if(generationRange.getIterationNormalized()<0.2f) {
-                lastIncrement.rotate(-.04f);
-            } else if (generationRange.getIterationNormalized()<0.7f) {
-                lastIncrement.rotate(-.02f);
+            if(generationRange.getIterationNormalized()<0.15f) {
+                lastIncrement.rotate(-.07f);
+            } else if (generationRange.getIterationNormalized()<0.4f) {
+                lastIncrement.rotate(-.015f);
             } else {
-                lastIncrement.rotate(-.005f);
+                lastIncrement.rotate(-.0015f);
             }
 
             generationRange.next();
