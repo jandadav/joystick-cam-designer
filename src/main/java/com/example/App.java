@@ -112,8 +112,8 @@ public class App extends PApplet {
                 translate(-camPivot.x, -camPivot.y);
 
                 // TODO 0.00001f increment gives great results but veeeeery slow.
-                //float[] steps = {0.001f,0.0001f,0.00001f};
-                float[] steps = {0.001f, 0.0001f};
+                float[] steps = {0.001f,0.0001f,0.00001f};
+                //float[] steps = {0.001f, 0.0001f};
                 int iteration = 0;
                 while (s.collision == null) {
                     translate(camPivot.x, camPivot.y);
@@ -298,6 +298,7 @@ public class App extends PApplet {
         plot1.drawTitle();
         plot1.drawPoints();
         plot1.drawLines();
+        plot1.drawHorizontalLine(0f);
         plot1.endDraw();
 
         plot2.beginDraw();
@@ -410,22 +411,24 @@ public class App extends PApplet {
 
         while (generationRange.hasNext()) {
 
-
-            PVector newPosition = PVector.add(lastGeneratedPoint, lastIncrement);
-            camPointsLeft.add(newPosition);
-            lastGeneratedPoint = newPosition;
-
             // TODO rotating after first step creates a little flat space in the center.
             //  If both pieces of curve do not rotate the same way, it creates noticeable asymmetry
-            if(generationRange.getIterationNormalized()<0.3f) {
-                lastIncrement.rotate(.05f);
+            if(generationRange.getIterationNormalized()<0.1f) {
+                lastIncrement.rotate(.07f);
+            } else if (generationRange.getIterationNormalized()<0.3f) {
+                lastIncrement.rotate(.040f);
             } else {
                 lastIncrement.rotate(.035f);
             }
 
             if(generationRange.getIterationNormalized()>0.9f) {
-                lastIncrement.setMag(lastIncrement.mag()+0.0003f);
+                lastIncrement.setMag(lastIncrement.mag()+0.0005f);
             }
+
+            PVector newPosition = PVector.add(lastGeneratedPoint, lastIncrement);
+            camPointsLeft.add(newPosition);
+            lastGeneratedPoint = newPosition;
+
 
             generationRange.next();
         }
@@ -446,11 +449,11 @@ public class App extends PApplet {
             lastGeneratedPoint = newPosition;
 
             if(generationRange.getIterationNormalized()<0.2f) {
-                lastIncrement.rotate(-.05f);
+                lastIncrement.rotate(-.04f);
             } else if (generationRange.getIterationNormalized()<0.7f) {
                 lastIncrement.rotate(-.02f);
             } else {
-                lastIncrement.rotate(-.01f);
+                lastIncrement.rotate(-.005f);
             }
 
             generationRange.next();
