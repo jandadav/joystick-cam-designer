@@ -49,8 +49,8 @@ public class App extends PApplet {
 
     private List<SimStep> simData = new ArrayList<>();
     private int actualSimStep = 0;
-    private int simSteps = 30;
-    private boolean isSimulateOn = false;
+    private int simSteps = 31;
+    private boolean isSimulateOn = true;
 
 
     @Override
@@ -158,7 +158,8 @@ public class App extends PApplet {
         int nPoints = simSteps;
         GPointsArray points = new GPointsArray(nPoints);
         for (int i = 0; i < nPoints; i++) {
-            points.add(i, simData.get(i).joyArmMomentum );
+            //points.add(i, simData.get(i).joyArmMomentum );
+            points.add(i, degrees(simData.get(nPoints-1-i).camRotation) );
         }
 
         GPointsArray points2 = new GPointsArray(nPoints);
@@ -187,6 +188,10 @@ public class App extends PApplet {
 
     @Override
     public void draw() {
+
+        if (!isSimulateOn) {
+            calculateShapes2();
+        }
 
         SimStep s = simData.get(actualSimStep);
 
@@ -383,24 +388,35 @@ public class App extends PApplet {
 
     private void calculateShapes2() {
 
-        int steps = 10;
-        float incrementSize = 0.002f;
+        int steps = 32;
 
         // walk left
+        float incrementSize = 0.00074f;
         List<PVector> camPointsLeft = new ArrayList<>();
         Range<Float> generationRange = new Range<>(0f , 1f, steps);
         PVector lastGeneratedPoint = camCurveApex.copy();
         PVector lastIncrement = new PVector(-incrementSize,0f);
 
         while (generationRange.hasNext()) {
-            lastIncrement.rotate(.01f);
+            if(generationRange.getIterationNormalized()<0.3f) {
+                lastIncrement.rotate(.05f);
+            } else {
+                lastIncrement.rotate(.035f);
+            }
+
+            if(generationRange.getIterationNormalized()>0.9f) {
+                lastIncrement.setMag(lastIncrement.mag()+0.0003f);
+            }
+
             PVector newPosition = PVector.add(lastGeneratedPoint, lastIncrement);
             camPointsLeft.add(newPosition);
             lastGeneratedPoint = newPosition;
             generationRange.next();
         }
 
+        steps = 30;
         // walk right
+        incrementSize = 0.00074f;
         List<PVector> camPointsRight = new ArrayList<>();
         generationRange = new Range<>(0f , 1f, steps);
         lastGeneratedPoint = camCurveApex.copy();
@@ -409,10 +425,12 @@ public class App extends PApplet {
 
         while (generationRange.hasNext()) {
 
-            if(generationRange.getIterationNormalized()<0.5f) {
-                lastIncrement.rotate(-.01f);
-            } else {
+            if(generationRange.getIterationNormalized()<0.2f) {
+                lastIncrement.rotate(-.05f);
+            } else if (generationRange.getIterationNormalized()<0.7f) {
                 lastIncrement.rotate(-.02f);
+            } else {
+                lastIncrement.rotate(-.01f);
             }
 
             PVector newPosition = PVector.add(lastGeneratedPoint, lastIncrement);
