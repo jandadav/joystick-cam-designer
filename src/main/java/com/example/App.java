@@ -13,7 +13,6 @@ import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static com.example.utils.Utils.*;
 
@@ -109,18 +108,30 @@ public class App extends PApplet {
                 s.camRotation = 0;
                 translate(camPivot.x, camPivot.y);
                 rotate(-1f);
-                s.camRotation -= 1f;
+                s.camRotation -=1f;
                 translate(-camPivot.x, -camPivot.y);
 
-
+                // TODO 0.00001f increment gives great results but veeeeery slow.
+                //float[] steps = {0.001f,0.0001f,0.00001f};
+                float[] steps = {0.001f, 0.0001f};
+                int iteration = 0;
                 while (s.collision == null) {
                     translate(camPivot.x, camPivot.y);
-                    rotate(0.001f);
-                    s.camRotation += 0.001f;
+                    rotate(steps[iteration]);
+                    s.camRotation += steps[iteration];
                     translate(-camPivot.x, -camPivot.y);
 
                     PVector[] camCurveScreen = pointsToScreenCoords(camCurvePoints, this);
-                    s.collision = polyPoly(camCurveScreen, circlePointsScreen);
+                    PVector collision = polyPoly(camCurveScreen, circlePointsScreen);
+                    if (collision != null) {
+                        if(iteration == steps.length - 1) {
+                            s.collision = collision;
+                        } else {
+                            rotate(-2 * steps[iteration]);
+                            s.camRotation -= 2 * steps[iteration];
+                            iteration++;
+                        }
+                    }
                 }
                 popMatrix();
             } else {
@@ -158,8 +169,8 @@ public class App extends PApplet {
         int nPoints = simSteps;
         GPointsArray points = new GPointsArray(nPoints);
         for (int i = 0; i < nPoints; i++) {
-            //points.add(i, simData.get(i).joyArmMomentum );
-            points.add(i, degrees(simData.get(nPoints-1-i).camRotation) );
+            points.add(i, simData.get(i).joyArmMomentum );
+            //points.add(i, degrees(simData.get(nPoints-1-i).camRotation) ); // For checking symmetry of cam rotation, reverse cam rotation points
         }
 
         GPointsArray points2 = new GPointsArray(nPoints);
@@ -398,6 +409,14 @@ public class App extends PApplet {
         PVector lastIncrement = new PVector(-incrementSize,0f);
 
         while (generationRange.hasNext()) {
+
+
+            PVector newPosition = PVector.add(lastGeneratedPoint, lastIncrement);
+            camPointsLeft.add(newPosition);
+            lastGeneratedPoint = newPosition;
+
+            // TODO rotating after first step creates a little flat space in the center.
+            //  If both pieces of curve do not rotate the same way, it creates noticeable asymmetry
             if(generationRange.getIterationNormalized()<0.3f) {
                 lastIncrement.rotate(.05f);
             } else {
@@ -408,9 +427,6 @@ public class App extends PApplet {
                 lastIncrement.setMag(lastIncrement.mag()+0.0003f);
             }
 
-            PVector newPosition = PVector.add(lastGeneratedPoint, lastIncrement);
-            camPointsLeft.add(newPosition);
-            lastGeneratedPoint = newPosition;
             generationRange.next();
         }
 
@@ -425,6 +441,10 @@ public class App extends PApplet {
 
         while (generationRange.hasNext()) {
 
+            PVector newPosition = PVector.add(lastGeneratedPoint, lastIncrement);
+            camPointsRight.add(newPosition);
+            lastGeneratedPoint = newPosition;
+
             if(generationRange.getIterationNormalized()<0.2f) {
                 lastIncrement.rotate(-.05f);
             } else if (generationRange.getIterationNormalized()<0.7f) {
@@ -433,9 +453,6 @@ public class App extends PApplet {
                 lastIncrement.rotate(-.01f);
             }
 
-            PVector newPosition = PVector.add(lastGeneratedPoint, lastIncrement);
-            camPointsRight.add(newPosition);
-            lastGeneratedPoint = newPosition;
             generationRange.next();
         }
 
