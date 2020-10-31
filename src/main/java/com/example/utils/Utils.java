@@ -24,8 +24,8 @@ public class Utils {
         return radians / PI * 180;
     }
 
-    public static float quadratic(float min, float max, float i) {
-        return (float) (min + pow(i * sqrt(max-min),1.5f));
+    public static float quadratic(float min, float max, float i, float power) {
+        return (float) (min + pow(i * sqrt(max-min), power));
     }
 
     public static PVector[] pointsToScreenCoords(PVector[] points, PApplet applet) {

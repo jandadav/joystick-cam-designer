@@ -11,7 +11,9 @@ import processing.core.*;
 
 import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.example.utils.Utils.*;
 
@@ -22,15 +24,21 @@ public class App extends PApplet {
     public static float dpi = 10000;
     float joyArmLength = 0.04f;
     float joyBearingRadius = 0.005f;
-    float contactPointLimitAngle = 40f;
-    float camLimitAngle = 30f;
+    float contactPointLimitAngle = 160f;
+    float camLimitAngle = 20f;
     float joyLimitAngle = 20f;
     float joyLimitAngleExtension = 3f;
 
-    private PFont font;
-    private final PVector camPivot = new PVector(0.02f,0.02f);
-    private final PVector springPivot = new PVector(0.025f, 0.04f);
+    private final PVector joyArm = new PVector(0, joyArmLength);
+    private final PVector joyBearing = new PVector(0, joyBearingRadius);
+    private final PVector camCurveApex = PVector.add(joyArm, joyBearing);
+
+    private final PVector camPivot = new PVector(0.04f,0.04f);
+    private final PVector springMovingEnd = new PVector(-0.04f, 0.04f);
+    private final PVector springFixedEnd = new PVector(-0.04f, 0.00f);
     private PVector springL0;
+
+    private PFont font;
     private final int curveSteps = 80;
     private PShape _joyArmSweep;
     private PShape _contactSweep;
@@ -41,6 +49,8 @@ public class App extends PApplet {
 
     private List<SimStep> simData = new ArrayList<>();
     private int actualSimStep = 0;
+    private int simSteps = 30;
+    private boolean isSimulateOn = false;
 
 
     @Override
@@ -51,16 +61,6 @@ public class App extends PApplet {
     }
 
 
-    /**
-     * This works in setup, the matrix stack populates
-     *
-     * PVector force = new PVector(1,0);
-     *         pushMatrix();
-     *             translate(1f, 1f);
-     *             log.info("[{} : {}] ", screenX(force.x, force.y), screenY(force.x, force.y));
-     *         popMatrix();
-     */
-
     @Override
     public void setup() {
 
@@ -68,16 +68,13 @@ public class App extends PApplet {
         ellipseMode(CENTER);
         font = createFont("Consolas", 14, true);
 
-        // STATIC SETUP
+        // CREATE SHAPES
 
-        PVector joyArm = new PVector(0, joyArmLength);
-        PVector joyBearing = new PVector(0, joyBearingRadius);
-
-        calculateShapes(joyArm, joyBearing);
+        //calculateShapes(joyArm, joyBearing);
+        calculateShapes2();
 
         // SIM
 
-        int simSteps = 20;
         Range<Float> simRange = new Range<Float>(0f, 1f, simSteps);
 
         while(simRange.hasNext()) {
@@ -87,7 +84,7 @@ public class App extends PApplet {
             simData.add(s);
 
             // INPUT
-            s.joyRotation = lerp(0, radians(joyLimitAngle), simRange.getValue());
+            s.joyRotation = lerp(-radians(joyLimitAngle), radians(joyLimitAngle), simRange.getValue());
 
 
             // VECTORS
@@ -107,11 +104,12 @@ public class App extends PApplet {
             // COLLISION SIMULATION
             s.collision = null;
 
-            pushMatrix();
+            if (isSimulateOn) {
+                pushMatrix();
                 s.camRotation = 0;
                 translate(camPivot.x, camPivot.y);
                 rotate(-1f);
-                s.camRotation -=1f;
+                s.camRotation -= 1f;
                 translate(-camPivot.x, -camPivot.y);
 
 
@@ -124,14 +122,17 @@ public class App extends PApplet {
                     PVector[] camCurveScreen = pointsToScreenCoords(camCurvePoints, this);
                     s.collision = polyPoly(camCurveScreen, circlePointsScreen);
                 }
-            popMatrix();
-
+                popMatrix();
+            } else {
+                s.camRotation = 0;
+                s.collision = camCurveApex;
+            }
             // CALCULATE
 
-            s.springAnchorFixed = new PVector(-springPivot.x, springPivot.y);
-            springL0 = PVector.sub(s.springAnchorFixed, springPivot);
-            s.springInitialLength = PVector.sub(s.springAnchorFixed, springPivot);
-            s.springAnchorWithRotation = rotateAround(springPivot, camPivot, s.camRotation);
+            s.springAnchorFixed = new PVector(springFixedEnd.x, springFixedEnd.y);
+            springL0 = PVector.sub(s.springAnchorFixed, springMovingEnd);
+            s.springInitialLength = PVector.sub(s.springAnchorFixed, springMovingEnd);
+            s.springAnchorWithRotation = rotateAround(springMovingEnd, camPivot, s.camRotation);
             s.collisionWs = applyMatrix(s.collision, ((PGraphicsJava2D) g).g2.getTransform());
             s.contactForceDirection = PVector.sub(s.joyArmWithRotation, s.collisionWs);
             s.springLength = PVector.sub(s.springAnchorFixed, s.springAnchorWithRotation);
@@ -154,7 +155,7 @@ public class App extends PApplet {
         // PLOTS
         plot1 = new GPlot(this);
         plot2 = new GPlot(this);
-        int nPoints = 20;
+        int nPoints = simSteps;
         GPointsArray points = new GPointsArray(nPoints);
         for (int i = 0; i < nPoints; i++) {
             points.add(i, simData.get(i).joyArmMomentum );
@@ -220,8 +221,8 @@ public class App extends PApplet {
                 shape(_camCurve);
             popMatrix();
 
-            shape(_joyArmSweep);
-            shape(_contactSweep);
+            /*shape(_joyArmSweep);
+            shape(_contactSweep);*/
 
             ellipse(pixels(s.springAnchorWithRotation.x), pixels(s.springAnchorWithRotation.y), 20f, 20f);
             ellipse(pixels(s.springAnchorFixed.x), pixels(s.springAnchorFixed.y), 20f, 20f);
@@ -300,7 +301,7 @@ public class App extends PApplet {
                     actualSimStep--;
                 }
             } else if (keyCode == LEFT) {
-                if(actualSimStep<19){
+                if(actualSimStep<simSteps-1){
                     actualSimStep++;
                 }
             }
@@ -337,12 +338,12 @@ public class App extends PApplet {
         _camCurve.strokeWeight(3);
         _camCurve.fill(0, 128);
 
-        Range<Float> joyRange = new Range<>(0.0f, radians(joyLimitAngle + joyLimitAngleExtension), curveSteps);
-        Range<Float> contactRange = new Range<>(0.0f, radians(contactPointLimitAngle), curveSteps);
-        Range<Float> camRotationRange = new Range<>(0.0f, radians(camLimitAngle), curveSteps);
+        Range<Float> joyRange = new Range<>(-radians(joyLimitAngle + joyLimitAngleExtension) , radians(joyLimitAngle + joyLimitAngleExtension), curveSteps);
+        Range<Float> contactRange = new Range<>(0.0f, 2 * radians(contactPointLimitAngle), curveSteps);
+        Range<Float> camRotationRange = new Range<>(radians(camLimitAngle), radians(camLimitAngle), curveSteps);
 
-        PVector joyArmSweep = new PVector(joyArm.x, joyArm.y);
-        PVector joyBearingSweep = new PVector(joyBearing.x, joyBearing.y);
+        PVector joyArmSweep = new PVector(joyArm.x, joyArm.y).rotate(-radians(joyLimitAngle + joyLimitAngleExtension));
+        PVector joyBearingSweep = new PVector(joyBearing.x, joyBearing.y).rotate(-radians(contactPointLimitAngle));
 
         camCurvePoints = new PVector[curveSteps+3];
 
@@ -353,7 +354,8 @@ public class App extends PApplet {
             PVector contact = PVector.add(joyArmSweep, joyBearingSweep);
             _contactSweep.vertex(pixels(contact.x), pixels(contact.y));
 
-            PVector camCurve = rotateAround(contact, camPivot, quadratic(0, radians(camLimitAngle), camRotationRange.getIterationNormalized()));
+            //PVector camCurve = rotateAround(contact, camCurveApex, quadratic(0, radians(camLimitAngle), camRotationRange.getIterationNormalized(), 1.7f));
+            PVector camCurve = rotateAround(contact, camCurveApex, 0);
             _camCurve.vertex(pixels(camCurve.x), pixels(camCurve.y));
 
             camCurvePoints[joyRange.getIteration()] = camCurve;
@@ -365,7 +367,7 @@ public class App extends PApplet {
             contactRange.next();
             camRotationRange.next();
         }
-        float offset = 0.002f;
+        float offset = 0.05f;
         _camCurve.vertex(pixels(camCurvePoints[curveSteps-1].x-offset), pixels(camCurvePoints[curveSteps-1].y) );
         _camCurve.vertex(pixels(camCurvePoints[curveSteps-1].x-offset), pixels(camCurvePoints[0].y+offset));
         _camCurve.vertex(pixels(camCurvePoints[0].x), pixels(camCurvePoints[0].y+offset));
@@ -377,6 +379,72 @@ public class App extends PApplet {
         _joyArmSweep.endShape();
         _contactSweep.endShape();
         _camCurve.endShape();
+    }
+
+    private void calculateShapes2() {
+
+        int steps = 10;
+        float incrementSize = 0.002f;
+
+        // walk left
+        List<PVector> camPointsLeft = new ArrayList<>();
+        Range<Float> generationRange = new Range<>(0f , 1f, steps);
+        PVector lastGeneratedPoint = camCurveApex.copy();
+        PVector lastIncrement = new PVector(-incrementSize,0f);
+
+        while (generationRange.hasNext()) {
+            lastIncrement.rotate(.01f);
+            PVector newPosition = PVector.add(lastGeneratedPoint, lastIncrement);
+            camPointsLeft.add(newPosition);
+            lastGeneratedPoint = newPosition;
+            generationRange.next();
+        }
+
+        // walk right
+        List<PVector> camPointsRight = new ArrayList<>();
+        generationRange = new Range<>(0f , 1f, steps);
+        lastGeneratedPoint = camCurveApex.copy();
+        lastIncrement = new PVector(incrementSize,0f);
+        camPointsRight.add(camCurveApex);
+
+        while (generationRange.hasNext()) {
+
+            if(generationRange.getIterationNormalized()<0.5f) {
+                lastIncrement.rotate(-.01f);
+            } else {
+                lastIncrement.rotate(-.02f);
+            }
+
+            PVector newPosition = PVector.add(lastGeneratedPoint, lastIncrement);
+            camPointsRight.add(newPosition);
+            lastGeneratedPoint = newPosition;
+            generationRange.next();
+        }
+
+        float offset = 0.05f;
+        List<PVector> camPointsClosing = new ArrayList<>();
+        camPointsClosing.add(new PVector(camPointsLeft.get(camPointsLeft.size()-1).x, camPointsLeft.get(camPointsLeft.size()-1).y + offset));
+        camPointsClosing.add(new PVector(camPointsRight.get(camPointsRight.size()-1).x, camPointsRight.get(camPointsRight.size()-1).y + offset));
+
+        _camCurve = createShape();
+        _camCurve.beginShape();
+        _camCurve.stroke(color(30, 220, 20));
+        _camCurve.strokeWeight(3);
+        _camCurve.fill(0, 128);
+
+        Collections.reverse(camPointsRight);
+
+        List<PVector> curvePoints = new ArrayList<>();
+        curvePoints.addAll(camPointsRight);
+        curvePoints.addAll(camPointsLeft);
+        curvePoints.addAll(camPointsClosing);
+
+        curvePoints.forEach(v -> _camCurve.vertex(pixels(v.x), pixels(v.y)));
+
+        _camCurve.endShape();
+
+        camCurvePoints = curvePoints.toArray(new PVector[0]);
+
     }
 
     public static void main(String... args) {
