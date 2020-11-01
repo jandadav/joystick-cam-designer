@@ -2,6 +2,9 @@ package com.example.components;
 
 import processing.core.PVector;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class SimStep {
 
     public float joyRotation;
@@ -23,4 +26,6 @@ public class SimStep {
     public PVector springLength;
     public PVector contactArmToCamPivot;
     public PVector contactForceVector;
+
+    public List<String> messages = new ArrayList<>();
 }

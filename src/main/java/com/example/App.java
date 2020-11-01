@@ -13,6 +13,7 @@ import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.example.utils.Utils.*;
 
@@ -32,9 +33,9 @@ public class App extends PApplet {
     private final PVector joyBearing = new PVector(0, joyBearingRadius);
     private final PVector camCurveApex = PVector.add(joyArm, joyBearing);
 
-    private final PVector camPivot = new PVector(0.04f,0.04f);
-    private final PVector springMovingEnd = new PVector(-0.04f, 0.04f);
-    private final PVector springFixedEnd = new PVector(-0.04f, 0.00f);
+    private final PVector camPivot = new PVector(0.03f,0.04f);
+    private final PVector springMovingEnd = new PVector(-0.05f, 0.05f);
+    private final PVector springFixedEnd = new PVector(-0.05f, -0.01f);
     private PVector springL0;
 
     private PFont font;
@@ -55,7 +56,7 @@ public class App extends PApplet {
     @Override
     public void settings() {
         super.settings();
-        size(900,900);
+        size(1200,900);
         smooth();
     }
 
@@ -112,8 +113,8 @@ public class App extends PApplet {
                 translate(-camPivot.x, -camPivot.y);
 
                 // TODO 0.00001f increment gives great results but veeeeery slow.
-                float[] steps = {0.001f,0.0001f,0.00001f};
-                //float[] steps = {0.001f, 0.0001f};
+                //float[] steps = {0.001f,0.0001f,0.00001f};
+                float[] steps = {0.001f, 0.0001f};
                 int iteration = 0;
                 while (s.collision == null) {
                     translate(camPivot.x, camPivot.y);
@@ -148,11 +149,27 @@ public class App extends PApplet {
             s.contactForceDirection = PVector.sub(s.joyArmWithRotation, s.collisionWs);
             s.springLength = PVector.sub(s.springAnchorFixed, s.springAnchorWithRotation);
 
-            float f0 = 1.86f;
-            float f8 = 19f;
-            float l0 = 0.04f;
-            float l8 = 0.1324f;
-            s.springForce = s.springLength.copy().setMag(springForceLerp(f0, f8, l0, l8, s.springLength.mag()));
+            // pull spring
+            // TZ 1000x0110x0390 Spring
+            /*float f0 = 2.82f;
+            float f8 = 29.5f;
+            float l0 = 0.039f;
+            float l8 = 0.092f;
+            s.springForce = s.springLength.copy().setMag(springForceLerp(f0, f8, l0, l8, s.springLength.mag()));*/
+
+            // push spring
+            // TZ 1250x093x0480
+            float C = 3.096f;
+            float precompression = 0f;
+            float preload  = precompression * C;
+            float maxDelta = 0.048f - precompression - 0.0268f;
+
+            float springDelta = s.springLength.mag() - s.springInitialLength.mag();
+            if (springDelta>=maxDelta) {
+                s.messages.add("ERROR: Spring compression exceeded");
+                log.error("Spring compression exceeded");
+            }
+            s.springForce = s.springLength.copy().setMag(preload + springDelta * C * 1000);
 
             s.springMomentum = moment(s.springForce, s.springAnchorWithRotation);
             s.contactArmToCamPivot = PVector.sub(camPivot, s.collisionWs);
@@ -212,7 +229,7 @@ public class App extends PApplet {
             scale(1f, -1f);
 
             // GRID
-            drawGrid(100, 800, 1, 0,300);
+            drawGrid(100, 1200, 1, 0,300);
             fill(color(255,0,0));
             ellipse(0, 0, 20, 20);
 
@@ -284,8 +301,16 @@ public class App extends PApplet {
         text("Spring L0: " + String.format("%f",springL0.mag()), 20, offset+=spacing);
         text("Spring Lmax: " + String.format("%f", simData.get(simData.size()-1).springLength.mag()) , 20, offset+=spacing);
         text("Spring deltaL max: " + String.format("%f", (simData.get(simData.size()-1).springLength.mag() - springL0.mag())), 20, offset+=spacing);
-        text("Spring deltaL: " + String.format("%f", (s.springLength.mag() - s.springInitialLength.mag())) + " m", 20, offset+=spacing);
+        text("Spring deltaL: " + String.format("%f", (s.springLength.mag() - s.springInitialLength.mag())) + " m", 15, offset+=spacing);
         text("Spring force: " + String.format("%f", s.springForce.mag()) + " N", 20, offset+=spacing);
+
+        offset+=spacing;
+        if(!s.messages.isEmpty()) {
+            fill(color(230,0,0));
+            text(s.messages.stream().collect(Collectors.joining("; ")), 20, offset+=spacing);
+        }
+
+
 
 
 
@@ -414,11 +439,11 @@ public class App extends PApplet {
             // TODO rotating after first step creates a little flat space in the center.
             //  If both pieces of curve do not rotate the same way, it creates noticeable asymmetry
             if(generationRange.getIterationNormalized()<0.1f) {
-                lastIncrement.rotate(.07f);
+                lastIncrement.rotate(.09f);
             } else if (generationRange.getIterationNormalized()<0.3f) {
-                lastIncrement.rotate(.040f);
+                lastIncrement.rotate(.050f);
             } else {
-                lastIncrement.rotate(.035f);
+                lastIncrement.rotate(.028f);
             }
 
             if(generationRange.getIterationNormalized()>0.9f) {
@@ -451,9 +476,9 @@ public class App extends PApplet {
             if(generationRange.getIterationNormalized()<0.15f) {
                 lastIncrement.rotate(-.07f);
             } else if (generationRange.getIterationNormalized()<0.4f) {
-                lastIncrement.rotate(-.015f);
+                lastIncrement.rotate(-.005f);
             } else {
-                lastIncrement.rotate(-.0015f);
+                lastIncrement.rotate(.0020f);
             }
 
             generationRange.next();
