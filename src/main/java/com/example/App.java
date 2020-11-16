@@ -23,7 +23,10 @@ public class App extends PApplet {
 
     public static float dpi = 10000;
     float joyArmLength = 0.04f;
-    float joyBearingRadius = 0.005f;
+
+    //310546	310.511050.500.3	Ložisko 685-2Z EZO
+    float joyBearingRadius = 0.0055f;
+
     float contactPointLimitAngle = 160f;
     float camLimitAngle = 20f;
     float joyLimitAngle = 20f;
@@ -34,8 +37,8 @@ public class App extends PApplet {
     private final PVector camCurveApex = PVector.add(joyArm, joyBearing);
 
     private final PVector camPivot = new PVector(0.03f,0.04f);
-    private final PVector springMovingEnd = new PVector(-0.05f, 0.05f);
-    private final PVector springFixedEnd = new PVector(-0.05f, -0.01f);
+    private final PVector springMovingEnd = new PVector(-0.04f, 0.06f);
+    private final PVector springFixedEnd = new PVector(-0.04f, -0.01f);
     private PVector springL0;
 
     private PFont font;
@@ -158,18 +161,19 @@ public class App extends PApplet {
             s.springForce = s.springLength.copy().setMag(springForceLerp(f0, f8, l0, l8, s.springLength.mag()));*/
 
             // push spring
-            // TZ 1250x093x0480
-            float C = 3.096f;
-            float precompression = 0f;
-            float preload  = precompression * C;
-            float maxDelta = 0.048f - precompression - 0.0268f;
 
-            float springDelta = s.springLength.mag() - s.springInitialLength.mag();
-            if (springDelta>=maxDelta) {
+            // TL 1600x116x0600
+            float C = 4.255f;
+            float precompression = 0.003f;
+            float preload  = precompression * C * 1000;
+            float maxCompression = 0.060f - precompression - 0.0369f;
+
+            float springCompression = s.springLength.mag() - s.springInitialLength.mag();
+            if (springCompression>=maxCompression) {
                 s.messages.add("ERROR: Spring compression exceeded");
                 log.error("Spring compression exceeded");
             }
-            s.springForce = s.springLength.copy().setMag(preload + springDelta * C * 1000);
+            s.springForce = s.springLength.copy().setMag(preload + springCompression * C * 1000);
 
             s.springMomentum = moment(s.springForce, s.springAnchorWithRotation);
             s.contactArmToCamPivot = PVector.sub(camPivot, s.collisionWs);
@@ -195,7 +199,7 @@ public class App extends PApplet {
             points2.add(i, degrees(simData.get(i).camRotation) );
         }
 
-        plot1.setPos(420, 10);
+        plot1.setPos(720, 10);
         plot1.setAllFontProperties("Consolas", 0, 12);
         plot1.setTitleText("Contact point rotation curve");
         plot1.getXAxis().setAxisLabelText("Joy arm angle");
@@ -204,7 +208,7 @@ public class App extends PApplet {
         plot1.getMainLayer().setPointColor(color(0,128,0));
         plot1.setPoints(points);
 
-        plot2.setPos(420, 10);
+        plot2.setPos(720, 10);
         plot2.setAllFontProperties("Consolas", 0, 12);
         plot2.setTitleText("Contact point rotation curve");
         plot2.getXAxis().setAxisLabelText("Joy arm angle");
@@ -226,10 +230,10 @@ public class App extends PApplet {
         background(100);
         pushMatrix();
             translate(width/2, height-100);
-            scale(1f, -1f);
+            scale(0.75f, -.75f);
 
             // GRID
-            drawGrid(100, 1200, 1, 0,300);
+            drawGrid(100, 1200, 1, 0,100);
             fill(color(255,0,0));
             ellipse(0, 0, 20, 20);
 
@@ -508,6 +512,7 @@ public class App extends PApplet {
 
         camCurvePoints = curvePoints.toArray(new PVector[0]);
 
+        log.info(curvePoints.stream().map(pVector -> pVector.x * 100 +"," + pVector.y * 100 + ",0").collect(Collectors.joining("\n")));
     }
 
     public static void main(String... args) {
