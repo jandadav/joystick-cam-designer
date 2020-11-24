@@ -4,6 +4,8 @@ import com.example.App;
 import processing.core.PApplet;
 import processing.core.PVector;
 
+import java.awt.geom.AffineTransform;
+
 import static java.lang.Math.pow;
 import static java.lang.Math.sqrt;
 import static processing.core.PConstants.PI;
@@ -173,5 +175,15 @@ public class Utils {
 
     public static float springForceLerp(float f0, float f8, float l0, float l8, float springLength) {
         return f0 + (((f8-f0) / (l8-l0)) * (springLength - l0));
+    }
+
+    public static PVector applyMatrix(PVector vector, AffineTransform matrix) {
+        double flatMatrix[]  = new double[6];
+        matrix.getMatrix(flatMatrix);
+
+        float colX = (float)(flatMatrix[0]*vector.x + flatMatrix[2]*vector.y - flatMatrix[4]);
+        float colY = (float)(flatMatrix[1]*vector.x + flatMatrix[3]*vector.y + flatMatrix[5]);
+
+        return new PVector(colX, colY);
     }
 }
