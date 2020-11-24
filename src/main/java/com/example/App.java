@@ -1,5 +1,6 @@
 package com.example;
 
+import com.example.components.CurvatureListCurve;
 import com.example.components.SimStep;
 import com.example.utils.Range;
 import com.example.utils.Utils;
@@ -46,6 +47,7 @@ public class App extends PApplet {
     private PShape _joyArmSweep;
     private PShape _contactSweep;
     private PShape _camCurve;
+    private PShape _camCurve2;
     private GPlot plot1;
     private GPlot plot2;
     private PVector[] camCurvePoints;
@@ -74,7 +76,8 @@ public class App extends PApplet {
         // CREATE SHAPES
 
         //calculateShapes(joyArm, joyBearing);
-        calculateShapes2();
+        //calculateShapes2();
+        calculateShapes3();
 
         // SIM
 
@@ -222,7 +225,8 @@ public class App extends PApplet {
     public void draw() {
 
         if (!isSimulateOn) {
-            calculateShapes2();
+            //calculateShapes2();
+            calculateShapes3();
         }
 
         SimStep s = simData.get(actualSimStep);
@@ -256,6 +260,7 @@ public class App extends PApplet {
                 rotate(s.camRotation);
                 translate(pixels(-camPivot.x), pixels(-camPivot.y));
                 shape(_camCurve);
+                //shape(_camCurve2);
             popMatrix();
 
             /*shape(_joyArmSweep);
@@ -365,20 +370,20 @@ public class App extends PApplet {
     }
 
     private void calculateShapes(PVector joyArm, PVector joyBearing) {
-        _joyArmSweep = createShape();
-        _contactSweep = createShape();
-        _camCurve = createShape();
 
+        _joyArmSweep = createShape();
         _joyArmSweep.beginShape();
         _joyArmSweep.stroke(color(255, 255, 0));
         _joyArmSweep.strokeWeight(3);
         _joyArmSweep.fill(0, 1);
 
+        _contactSweep = createShape();
         _contactSweep.beginShape();
         _contactSweep.stroke(color(128, 90, 200));
         _contactSweep.strokeWeight(3);
         _contactSweep.fill(0, 1);
 
+        _camCurve = createShape();
         _camCurve.beginShape();
         _camCurve.stroke(color(30, 220, 20));
         _camCurve.strokeWeight(3);
@@ -513,6 +518,46 @@ public class App extends PApplet {
         camCurvePoints = curvePoints.toArray(new PVector[0]);
 
         log.info(curvePoints.stream().map(pVector -> pVector.x * 100 +"," + pVector.y * 100 + ",0").collect(Collectors.joining("\n")));
+    }
+
+    public void calculateShapes3() {
+        _camCurve = createShape();
+        _camCurve.beginShape();
+        _camCurve.stroke(color(30, 220, 20));
+        _camCurve.strokeWeight(3);
+        _camCurve.fill(0, 128);
+
+        CurvatureListCurve d = new CurvatureListCurve(new PVector(0f, 0.0455f), new PVector(1f, 0f), 0.0010f,
+                new CurvatureListCurve.CurveArc(-0.0050f, 0.0010f),
+                new CurvatureListCurve.CurveArc(-0.0500f, 0.0230f)
+        );
+
+        ArrayList<PVector> dPoints = d.getPoints();
+
+        CurvatureListCurve c = new CurvatureListCurve(new PVector(0f, 0.0455f), new PVector(-1f, 0f), 0.0010f,
+                new CurvatureListCurve.CurveArc(0.0050f, 0.0010f),
+                new CurvatureListCurve.CurveArc(0.0200f, 0.0100f),
+                new CurvatureListCurve.CurveArc(0.0300f, 0.0130f)
+        );
+
+        float offset = 0.05f;
+        List<PVector> camPointsClosing = new ArrayList<>();
+        camPointsClosing.add(new PVector(c.getPoints().get(c.getPoints().size()-1).x, c.getPoints().get(c.getPoints().size()-1).y + offset));
+        camPointsClosing.add(new PVector(dPoints.get(dPoints.size()-1).x, dPoints.get(dPoints.size()-1).y + offset));
+
+        Collections.reverse(dPoints);
+
+        List<PVector> curvePoints = new ArrayList<>();
+        curvePoints.addAll(dPoints);
+        curvePoints.addAll(c.getPoints());
+        curvePoints.addAll(camPointsClosing);
+
+        curvePoints.forEach(v -> _camCurve.vertex(pixels(v.x), pixels(v.y)));
+
+        _camCurve.endShape();
+
+        camCurvePoints = curvePoints.toArray(new PVector[0]);
+
     }
 
     public static void main(String... args) {
