@@ -22,11 +22,11 @@ import static com.example.utils.Utils.*;
 public class App extends PApplet {
 
 
-    public static float dpi = 10000;
-    float joyArmLength = 0.04f;
+    public static float dpi = 10;
+    float joyArmLength = 40f;
 
     //310546	310.511050.500.3	Ložisko 685-2Z EZO
-    float joyBearingRadius = 0.0055f;
+    float joyBearingRadius = 5.5f;
 
     float contactPointLimitAngle = 160f;
     float camLimitAngle = 20f;
@@ -37,9 +37,9 @@ public class App extends PApplet {
     private final PVector joyBearing = new PVector(0, joyBearingRadius);
     private final PVector camCurveApex = PVector.add(joyArm, joyBearing);
 
-    private final PVector camPivot = new PVector(0.03f,0.04f);
-    private final PVector springMovingEnd = new PVector(-0.04f, 0.06f);
-    private final PVector springFixedEnd = new PVector(-0.04f, -0.01f);
+    private final PVector camPivot = new PVector(40f,40f);
+    private final PVector springMovingEnd = new PVector(-40f, 60f);
+    private final PVector springFixedEnd = new PVector(-40f, -010f);
     private PVector springL0;
 
     private PFont font;
@@ -119,8 +119,8 @@ public class App extends PApplet {
                 translate(-camPivot.x, -camPivot.y);
 
                 // TODO 0.00001f increment gives great results but veeeeery slow.
-                //float[] steps = {0.001f,0.0001f,0.00001f};
-                float[] steps = {0.001f, 0.0001f};
+                float[] steps = {0.001f,0.00001f,0.0000001f};
+                //float[] steps = {0.001f, 0.0001f};
                 int iteration = 0;
                 while (s.collision == null) {
                     translate(camPivot.x, camPivot.y);
@@ -167,16 +167,16 @@ public class App extends PApplet {
 
             // TL 1600x116x0600
             float C = 4.255f;
-            float precompression = 0.003f;
-            float preload  = precompression * C * 1000;
-            float maxCompression = 0.060f - precompression - 0.0369f;
+            float precompression = 3f;
+            float preload  = precompression * C ;
+            float maxCompression = 60f - precompression - 36.9f;
 
             float springCompression = s.springLength.mag() - s.springInitialLength.mag();
             if (springCompression>=maxCompression) {
                 s.messages.add("ERROR: Spring compression exceeded");
                 log.error("Spring compression exceeded");
             }
-            s.springForce = s.springLength.copy().setMag(preload + springCompression * C * 1000);
+            s.springForce = s.springLength.copy().setMag(preload + springCompression * C);
 
             s.springMomentum = moment(s.springForce, s.springAnchorWithRotation);
             s.contactArmToCamPivot = PVector.sub(camPivot, s.collisionWs);
@@ -283,7 +283,7 @@ public class App extends PApplet {
             // FORCES
             strokeWeight(6);
             stroke(color(255, 111, 0));
-            float forceDrawScale = 0.001f;
+            float forceDrawScale = 1f;
             line(pixels(s.springAnchorWithRotation.x), pixels(s.springAnchorWithRotation.y), pixels(s.springAnchorWithRotation.x +  forceDrawScale * s.springForce.x), pixels(s.springAnchorWithRotation.y + forceDrawScale * s.springForce.y));
             line(pixels(s.collisionWs.x), pixels(s.collisionWs.y), pixels(s.collisionWs.x +  forceDrawScale * s.contactForceVector.x), pixels(s.collisionWs.y + forceDrawScale * s.contactForceVector.y));
 
@@ -527,20 +527,20 @@ public class App extends PApplet {
         _camCurve.strokeWeight(3);
         _camCurve.fill(0, 128);
 
-        CurvatureListCurve d = new CurvatureListCurve(new PVector(0f, 0.0455f), new PVector(1f, 0f), 0.0010f,
-                new CurvatureListCurve.CurveArc(-0.0050f, 0.0010f),
-                new CurvatureListCurve.CurveArc(-0.0500f, 0.0230f)
+        CurvatureListCurve d = new CurvatureListCurve(new PVector(0f, 45.5f), new PVector(1f, 0f), 0.5f,
+                new CurvatureListCurve.CurveArc(-5.5f, 1f),
+                new CurvatureListCurve.CurveArc(-50.0f, 23.0f)
         );
 
         ArrayList<PVector> dPoints = d.getPoints();
 
-        CurvatureListCurve c = new CurvatureListCurve(new PVector(0f, 0.0455f), new PVector(-1f, 0f), 0.0010f,
-                new CurvatureListCurve.CurveArc(0.0050f, 0.0010f),
-                new CurvatureListCurve.CurveArc(0.0200f, 0.0100f),
-                new CurvatureListCurve.CurveArc(0.0300f, 0.0130f)
+        CurvatureListCurve c = new CurvatureListCurve(new PVector(0f, 45.5f), new PVector(-1f, 0f), 0.5f,
+                new CurvatureListCurve.CurveArc(5.5f, 1f),
+                new CurvatureListCurve.CurveArc(20.0f, 10.0f),
+                new CurvatureListCurve.CurveArc(30.0f, 13.0f)
         );
 
-        float offset = 0.05f;
+        float offset = 50f;
         List<PVector> camPointsClosing = new ArrayList<>();
         camPointsClosing.add(new PVector(c.getPoints().get(c.getPoints().size()-1).x, c.getPoints().get(c.getPoints().size()-1).y + offset));
         camPointsClosing.add(new PVector(dPoints.get(dPoints.size()-1).x, dPoints.get(dPoints.size()-1).y + offset));
